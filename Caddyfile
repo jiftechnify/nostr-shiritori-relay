@@ -1,0 +1,17 @@
+localhost:80 {
+	@websocket {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	@nip11 {
+		header Accept application/nostr+json
+	}
+
+	root * /srv
+
+	route {
+		reverse_proxy @websocket strfry-shiritori:7777
+		reverse_proxy @nip11 strfry-shiritori:7777
+		file_server
+	}
+}
