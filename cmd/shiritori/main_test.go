@@ -4,21 +4,39 @@ import (
 	"testing"
 )
 
-func TestToKatakana(t *testing.T) {
+func TestNormalizeKanaAt(t *testing.T) {
 	tests := []struct {
-		in   rune
+		in   string
+		i    int
 		want rune
 	}{
-		{in: 'あ', want: 'ア'},
-		{in: 'ぁ', want: 'ァ'},
-		{in: 'が', want: 'ガ'},
-		{in: 'ゔ', want: 'ヴ'},
-		{in: 'ー', want: 'ー'},
+		{in: "あいうえお", i: 0, want: 'ア'},
+		{in: "あいうえお", i: 4, want: 'オ'},
+		{in: "アイウエオ", i: 2, want: 'ウ'},
+		{in: "がぎぐげご", i: 0, want: 'ガ'},
+		{in: "ぱぴぷぺぽ", i: 0, want: 'パ'},
+		{in: "ｱｲｳｴｵ", i: 0, want: 'ア'},
+		{in: "ｱｲｳｴｵ", i: 4, want: 'オ'},
+		{in: "ｯﾀｰﾝ", i: 0, want: 'ッ'},
+		{in: "ﾐﾂｦ", i: 2, want: 'ヲ'},
+		{in: "ｶﾞｷﾞｸﾞｹﾞｺﾞ", i: 0, want: 'ガ'},
+		{in: "ｶﾞｷﾞｸﾞｹﾞｺﾞ", i: 8, want: 'ゴ'},
+		{in: "ｶ゛ｷ゛ｸ゛ｹ゛ｺ゛", i: 0, want: 'ガ'},
+		{in: "ｶ゛ｷ゛ｸ゛ｹ゛ｺ゛", i: 8, want: 'ゴ'},
+		{in: "ﾊﾟﾋﾟﾌﾟﾍﾟﾎﾟ", i: 0, want: 'パ'},
+		{in: "ﾊﾟﾋﾟﾌﾟﾍﾟﾎﾟ", i: 8, want: 'ポ'},
+		{in: "ﾊ゜ﾋ゜ﾌ゜ﾍ゜ﾎ゜", i: 0, want: 'パ'},
+		{in: "ﾊ゜ﾋ゜ﾌ゜ﾍ゜ﾎ゜", i: 8, want: 'ポ'},
+		{in: "ﾅﾞﾆﾞﾇﾞﾈﾞﾉﾞ", i: 0, want: 'ナ'},
+		{in: "ﾅﾞﾆﾞﾇﾞﾈﾞﾉﾞ", i: 8, want: 'ノ'},
+		{in: "ﾅﾟﾆﾟﾇﾟﾈﾟﾉﾟ", i: 0, want: 'ナ'},
+		{in: "ﾅﾟﾆﾟﾇﾟﾈﾟﾉﾟ", i: 8, want: 'ノ'},
+		{in: "漢字", i: 0, want: 0},
 	}
 
 	for _, tt := range tests {
-		if got := toKatakana(tt.in); got != tt.want {
-			t.Errorf("toKatakana(%q) = %q; want %q", tt.in, got, tt.want)
+		if got := normalizeKanaAt([]rune(tt.in), tt.i); got != tt.want {
+			t.Errorf("normalizeKanaAt(%q, %d) = %q; want %q", tt.in, tt.i, got, tt.want)
 		}
 	}
 }
@@ -32,6 +50,7 @@ func TestAllKanaOrJaPunct(t *testing.T) {
 		{in: "アイウエオ", want: true},
 		{in: "！？", want: true},
 		{in: "ぽわーー！ーー！", want: true},
+		{in: "ｳﾞｧｯ!?", want: true},
 		{in: "ああNostr", want: false},
 		{in: "🐧ぽわ🐧", want: true},
 		{in: "🦩nos🦩", want: false},
@@ -56,11 +75,13 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		head    rune
 		last    rune
 	}{
-		{in: "あいうえお", wantErr: false, head: 'あ', last: 'お'},
+		{in: "あいうえお", wantErr: false, head: 'ア', last: 'オ'},
 		{in: "アイウエオ", wantErr: false, head: 'ア', last: 'オ'},
-		{in: "ぽワ", wantErr: false, head: 'ぽ', last: 'ワ'},
+		{in: "ぽワ", wantErr: false, head: 'ポ', last: 'ワ'},
 		{in: "マジ！？", wantErr: false, head: 'マ', last: 'ジ'},
-		{in: "あーー", wantErr: false, head: 'あ', last: 'あ'},
+		{in: "あーー", wantErr: false, head: 'ア', last: 'ア'},
+		{in: "ｳﾞｧｯ", wantErr: false, head: 'ヴ', last: 'ッ'},
+		{in: "ｳｶﾞﾝﾀﾞ", wantErr: false, head: 'ウ', last: 'ダ'},
 		{in: "！？", wantErr: true, head: 0, last: 0},
 	}
 
@@ -90,14 +111,13 @@ func TestIsShiritoriConnected(t *testing.T) {
 		currHead rune
 		want     bool
 	}{
-		{prevLast: 'あ', currHead: 'あ', want: true},
-		{prevLast: 'ア', currHead: 'あ', want: true},
-		{prevLast: 'あ', currHead: 'ア', want: true},
-		{prevLast: 'あ', currHead: 'い', want: false},
-		{prevLast: 'が', currHead: 'カ', want: true},
-		{prevLast: 'か', currHead: 'が', want: false},
-		{prevLast: 'ヴ', currHead: 'う', want: true},
-		{prevLast: 'ゔ', currHead: 'ブ', want: true},
+		{prevLast: 'ア', currHead: 'ア', want: true},
+		{prevLast: 'ア', currHead: 'イ', want: false},
+		{prevLast: 'ガ', currHead: 'カ', want: true},
+		{prevLast: 'カ', currHead: 'ガ', want: false},
+		{prevLast: 'ッ', currHead: 'ツ', want: true},
+		{prevLast: 'ヴ', currHead: 'ウ', want: true},
+		{prevLast: 'ヴ', currHead: 'ブ', want: true},
 	}
 
 	for _, tt := range tests {
