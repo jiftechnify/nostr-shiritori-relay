@@ -84,7 +84,7 @@ func hasTagOfName(event *nostr.Event, name string) bool {
 
 var (
 	regexpSpaces           = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
-	regexpAllKanaOrJaPunct = regexp.MustCompile(`^[ぁ-ゖァ-ヶ、。・ー〜…！？]+$`)
+	regexpAllKanaOrJaPunct = regexp.MustCompile(`^[ぁ-ゖァ-ヶ、。・ー〜…！？゛゜]+$`)
 )
 
 var allowedConnections = map[rune][]rune{
