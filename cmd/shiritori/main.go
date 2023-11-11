@@ -9,6 +9,7 @@ import (
 
 	evsifter "github.com/jiftechnify/strfry-evsifter"
 	"github.com/nbd-wtf/go-nostr"
+	emoji "github.com/tmdvs/Go-Emoji-Utils"
 )
 
 func main() {
@@ -31,7 +32,7 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 	}
 
 	// reject if content has characters not allowed
-	trimmedContent := regexpSpaces.ReplaceAllString(input.Event.Content, "")
+	trimmedContent := trimSpacesAndEmojis(input.Event.Content)
 	if !regexpAllKanaOrJaPunct.MatchString(trimmedContent) {
 		return input.Reject("blocked: content of post has non-kana letters")
 	}
@@ -82,8 +83,8 @@ func hasTagOfName(event *nostr.Event, name string) bool {
 }
 
 var (
-	regexpSpaces           = regexp.MustCompile(`\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}`)
-	regexpAllKanaOrJaPunct = regexp.MustCompile(`[ぁ-ゖァ-ヶ、。・ー！？]+`)
+	regexpSpaces           = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
+	regexpAllKanaOrJaPunct = regexp.MustCompile(`^[ぁ-ゖァ-ヶ、。・ー〜…！？]+$`)
 )
 
 var allowedConnections = map[rune][]rune{
@@ -149,6 +150,10 @@ func toKatakana(r rune) rune {
 		return r + 0x60
 	}
 	return r
+}
+
+func trimSpacesAndEmojis(s string) string {
+	return emoji.RemoveAll(regexpSpaces.ReplaceAllString(s, ""))
 }
 
 func effectiveHeadAndLast(s string) (rune, rune, error) {

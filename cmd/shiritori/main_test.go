@@ -23,6 +23,32 @@ func TestToKatakana(t *testing.T) {
 	}
 }
 
+func TestAllKanaOrJaPunct(t *testing.T) {
+	tests := []struct {
+		in   string
+		want bool
+	}{
+		{in: "あいうえお", want: true},
+		{in: "アイウエオ", want: true},
+		{in: "！？", want: true},
+		{in: "ぽわーー！ーー！", want: true},
+		{in: "ああNostr", want: false},
+		{in: "🐧ぽわ🐧", want: true},
+		{in: "🦩nos🦩", want: false},
+		{in: "🎍竹🎍", want: false},
+		{in: "あ い\nう", want: true},
+		{in: "あ i\nう", want: false},
+		{in: "あ 異\nウ", want: false},
+	}
+
+	for _, tt := range tests {
+		trimmedContent := trimSpacesAndEmojis(tt.in)
+		if got := regexpAllKanaOrJaPunct.MatchString(trimmedContent); got != tt.want {
+			t.Errorf("regexpAllKanaOrJaPunct.MatchString(%q) = %v; want %v", trimmedContent, got, tt.want)
+		}
+	}
+}
+
 func TestEffectiveHeadAndList(t *testing.T) {
 	tests := []struct {
 		in      string
