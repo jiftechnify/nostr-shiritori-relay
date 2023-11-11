@@ -1,7 +1,7 @@
 services:
-  strfry-shiritori:
+  strfry_shiritori:
     build: .
-    container_name: strfry-shiritori
+    container_name: strfry_shiritori
     command: --config=config/strfry.conf relay
     volumes:
       - ./config:/app/config
@@ -15,17 +15,20 @@ services:
         max-size: "50m"
         max-file: "20"
 
-  caddy-shiritori-relay:
+  caddy_shiritori_relay:
     image: caddy:2.7.5
-    container_name: caddy-shiritori-relay
-    ports:
-      - "8877:80"
+    container_name: caddy_shiritori_relay
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./web:/srv
       - caddy_data:/data
       - caddy_config:/config
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
 
 volumes:
   caddy_data:
