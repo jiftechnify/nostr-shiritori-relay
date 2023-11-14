@@ -1,18 +1,65 @@
 package main
 
 import (
+	_ "embed"
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"regexp"
+	"strings"
 
 	evsifter "github.com/jiftechnify/strfry-evsifter"
 	"github.com/nbd-wtf/go-nostr"
 	emoji "github.com/tmdvs/Go-Emoji-Utils"
+
+	ipaneologd "github.com/ikawaha/kagome-dict-ipa-neologd"
+	"github.com/ikawaha/kagome/v2/tokenizer"
 )
 
+var (
+	//go:embed bep-eng.dic
+	engDictData string
+	//go:embed custom_dict.txt
+	customDictData string
+
+	readingDict map[string]string = make(map[string]string)
+
+	kagomeTokenizer *tokenizer.Tokenizer
+)
+
+func parseReadingDict(s string) {
+	for _, line := range strings.Split(s, "\n") {
+		if len(line) == 0 || line[0] == '#' {
+			continue
+		}
+		split := strings.Split(line, " ")
+		if len(split) < 2 {
+			continue
+		}
+		readingDict[split[0]] = split[1]
+	}
+}
+
+func initialize() error {
+	var err error
+	kagomeTokenizer, err = tokenizer.New(ipaneologd.Dict(), tokenizer.OmitBosEos())
+	if err != nil {
+		return fmt.Errorf("failed to initialize kagome tokenizer: %w", err)
+	}
+
+	parseReadingDict(engDictData)
+	parseReadingDict(customDictData)
+
+	return nil
+}
+
 func main() {
+	if err := initialize(); err != nil {
+		log.Fatal(err)
+	}
+
 	var r evsifter.Runner
 	r.SiftWithFunc(shiritoriSifter)
 	r.Run()
@@ -31,17 +78,13 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 		return input.ShadowReject()
 	}
 
-	// reject if content has characters not allowed
-	trimmedContent := trimSpacesAndEmojis(input.Event.Content)
-	if !regexpAllKanaOrJaPunct.MatchString(trimmedContent) {
-		return input.Reject("blocked: content of post has non-kana letters")
-	}
-
 	// shiritori judgement
-	head, last, err := effectiveHeadAndLast(trimmedContent)
+	head, last, err := effectiveHeadAndLast(input.Event.Content)
 	if err != nil {
-		return input.Reject("blocked: content of post has no kana")
+		log.Printf("failed to determine head/last of reading of content(%q) %v", input.Event.Content, err)
+		return input.Reject("blocked: couldn't determine head/last of reading of content")
 	}
+	log.Printf("content: %s, head: %c, last: %c", input.Event.Content, head, last)
 
 	f, err := os.OpenFile("./resource/last_kana.txt", os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
@@ -84,8 +127,9 @@ func hasTagOfName(event *nostr.Event, name string) bool {
 
 var (
 	regexpSpaces = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
-	// ｡-ﾟ: halfwidth katakanas and punctuations
-	regexpAllKanaOrJaPunct = regexp.MustCompile(`^[ぁ-ゖァ-ヶ｡-ﾟ。「」、・ー゛゜〜…！？!?-]+$`)
+
+	regexpAllEnAlphabet = regexp.MustCompile(`^[a-zA-Z]+$`)
+	regexpAllHwKana     = regexp.MustCompile(`^[ｦ-ﾟ]+$`)
 )
 
 var allowedConnections = map[rune][]rune{
@@ -222,6 +266,35 @@ var hwHandakuon2FwKana = map[rune]rune{
 	'ﾎ': 'ポ',
 }
 
+var enAlphabetReadings = map[rune]string{
+	'A': "エー",
+	'B': "ビー",
+	'C': "シー",
+	'D': "ディー",
+	'E': "イー",
+	'F': "エフ",
+	'G': "ジー",
+	'H': "エイチ",
+	'I': "アイ",
+	'J': "ジェー",
+	'K': "ケー",
+	'L': "エル",
+	'M': "エム",
+	'N': "エヌ",
+	'O': "オー",
+	'P': "ピー",
+	'Q': "キュー",
+	'R': "アール",
+	'S': "エス",
+	'T': "ティー",
+	'U': "ユー",
+	'V': "ブイ",
+	'W': "ダブリュー",
+	'X': "エックス",
+	'Y': "ワイ",
+	'Z': "ゼット",
+}
+
 // [ぁ-ゖ]
 func isHiragana(r rune) bool {
 	return 0x3041 <= r && r <= 0x3096
@@ -272,41 +345,132 @@ func normalizeKanaAt(rs []rune, i int) rune {
 	return 0
 }
 
-func trimSpacesAndEmojis(s string) string {
-	return emoji.RemoveAll(regexpSpaces.ReplaceAllString(s, ""))
+// normalize the string for determining reading.
+//
+// normalization proecss includes:
+//   - normalizing various space charcters to the "normal" space
+//   - removing all emojis
+//   - trimming trailing period
+//
+// trimming trailing period is necessary because kagome tokenizer sometimes group "the last character of word and the next period" mistakenly. (e.g. "punk." -> ["pun", "k."])
+func normalizeText(s string) string {
+	return strings.TrimRight(emoji.RemoveAll(regexpSpaces.ReplaceAllString(s, " ")), ".")
 }
 
-// returns head and last kana of string. kana will be normalized to fullwith katakana.
+// returns head and last kana of reading of the text. resulting kana will be normalized to fullwith katakana.
 func effectiveHeadAndLast(s string) (rune, rune, error) {
-	runes := []rune(s)
+	normalized := normalizeText(s)
+	tokens := kagomeTokenizer.Tokenize(normalized)
+	fmt.Println(tokens)
 
 	var (
 		h = 0
-		l = len(runes) - 1
+		l = len(tokens) - 1
+
+		head rune
+		last rune
 	)
-	for ; h < len(runes); h++ {
-		if isKana(runes[h]) {
+
+	for ; h < len(tokens); h++ {
+		if head = headKanaOfToken(tokens[h]); head != 0 {
 			break
 		}
 	}
-	for ; l >= 0; l-- {
-		if isKana(runes[l]) {
+	for ; l >= h; l-- {
+		if last = lastKanaOfToken(tokens[l]); last != 0 {
 			break
 		}
 	}
 
-	if h > l {
-		return 0, 0, errors.New("no kana in string")
-	}
-
-	var (
-		head = normalizeKanaAt(runes, h)
-		last = normalizeKanaAt(runes, l)
-	)
 	if head == 0 || last == 0 {
 		return 0, 0, errors.New("effectiveHeadAndLast: something wrong")
 	}
 	return head, last, nil
+}
+
+func headKanaOfToken(t tokenizer.Token) rune {
+	if r, ok := t.Reading(); ok {
+		if k := headKana(r); k != 0 {
+			return k
+		}
+	}
+
+	if regexpAllEnAlphabet.MatchString(t.Surface) {
+		upper := strings.ToUpper(t.Surface)
+		if r, ok := readingDict[upper]; ok {
+			if k := headKana(r); k != 0 {
+				return k
+			}
+		}
+		if r, ok := enAlphabetReadings[rune(upper[0])]; ok {
+			if k := headKana(r); k != 0 {
+				return k
+			}
+		}
+		return 0
+	}
+
+	if regexpAllHwKana.MatchString(t.Surface) {
+		return normalizeKanaAt([]rune(t.Surface), 0)
+	}
+	return 0
+}
+
+func headKana(r string) rune {
+	for _, c := range r {
+		if isKana(c) {
+			return c
+		}
+	}
+	return 0
+}
+
+func lastKanaOfToken(t tokenizer.Token) rune {
+	if r, ok := t.Reading(); ok {
+		if k := lastKana(r); k != 0 {
+			return k
+		}
+	}
+
+	if regexpAllEnAlphabet.MatchString(t.Surface) {
+		upper := strings.ToUpper(t.Surface)
+		if r, ok := readingDict[upper]; ok {
+			if k := lastKana(r); k != 0 {
+				return k
+			}
+		}
+		if r, ok := enAlphabetReadings[rune(upper[len(upper)-1])]; ok {
+			if k := lastKana(r); k != 0 {
+				return k
+			}
+		}
+		return 0
+	}
+
+	if regexpAllHwKana.MatchString(t.Surface) {
+		rs := []rune(t.Surface)
+		l := len(rs) - 1
+		for ; l >= 0; l-- {
+			if isKana(rs[l]) {
+				break
+			}
+		}
+		if l < 0 {
+			return 0
+		}
+		return normalizeKanaAt(rs, l)
+	}
+	return 0
+}
+
+func lastKana(r string) rune {
+	rs := []rune(r)
+	for i := len(rs) - 1; i >= 0; i-- {
+		if isKana(rs[i]) {
+			return rs[i]
+		}
+	}
+	return 0
 }
 
 // pre-condition: prevLast and currHead are normalized to fullwidth katakana

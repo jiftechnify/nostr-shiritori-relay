@@ -3,6 +3,8 @@ module shiritori-relay-evsifter
 go 1.21.3
 
 require (
+	github.com/ikawaha/kagome-dict-ipa-neologd v0.3.2
+	github.com/ikawaha/kagome/v2 v2.9.4
 	github.com/jiftechnify/strfry-evsifter v0.1.0
 	github.com/nbd-wtf/go-nostr v0.24.2
 	github.com/tmdvs/Go-Emoji-Utils v1.1.0
@@ -20,6 +22,7 @@ require (
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.2.0 // indirect
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
+	github.com/ikawaha/kagome-dict v1.0.9 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

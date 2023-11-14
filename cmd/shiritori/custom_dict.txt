@@ -1,0 +1,8 @@
+# Custom English word readings dictionary.
+#
+# Follow the format of bep-eng.dic:
+#
+# <English word in UPPER CASE> <Reading in カタカナ>
+#
+
+

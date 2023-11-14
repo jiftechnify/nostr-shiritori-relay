@@ -1,8 +1,17 @@
 package main
 
 import (
+	"log"
+	"os"
 	"testing"
 )
+
+func TestMain(m *testing.M) {
+	if err := initialize(); err != nil {
+		log.Fatal(err)
+	}
+	os.Exit(m.Run())
+}
 
 func TestNormalizeKanaAt(t *testing.T) {
 	tests := []struct {
@@ -41,33 +50,6 @@ func TestNormalizeKanaAt(t *testing.T) {
 	}
 }
 
-func TestAllKanaOrJaPunct(t *testing.T) {
-	tests := []struct {
-		in   string
-		want bool
-	}{
-		{in: "あいうえお", want: true},
-		{in: "アイウエオ", want: true},
-		{in: "！？", want: true},
-		{in: "ぽわーー！ーー！", want: true},
-		{in: "ｳﾞｧｯ!?", want: true},
-		{in: "ああNostr", want: false},
-		{in: "🐧ぽわ🐧", want: true},
-		{in: "🦩nos🦩", want: false},
-		{in: "🎍竹🎍", want: false},
-		{in: "あ い\nう", want: true},
-		{in: "あ i\nう", want: false},
-		{in: "あ 異\nウ", want: false},
-	}
-
-	for _, tt := range tests {
-		trimmedContent := trimSpacesAndEmojis(tt.in)
-		if got := regexpAllKanaOrJaPunct.MatchString(trimmedContent); got != tt.want {
-			t.Errorf("regexpAllKanaOrJaPunct.MatchString(%q) = %v; want %v", trimmedContent, got, tt.want)
-		}
-	}
-}
-
 func TestEffectiveHeadAndList(t *testing.T) {
 	tests := []struct {
 		in      string
@@ -82,6 +64,15 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		{in: "あーー", wantErr: false, head: 'ア', last: 'ア'},
 		{in: "ｳﾞｧｯ", wantErr: false, head: 'ヴ', last: 'ッ'},
 		{in: "ｳｶﾞﾝﾀﾞ", wantErr: false, head: 'ウ', last: 'ダ'},
+		{in: "ｳﾜｰ!", wantErr: false, head: 'ウ', last: 'ワ'},
+		{in: "漢字", wantErr: false, head: 'カ', last: 'ジ'},
+		{in: "カナと漢字が混ざった文", wantErr: false, head: 'カ', last: 'ン'},
+		{in: "ｶﾅと漢字が混ざった文", wantErr: false, head: 'カ', last: 'ン'},
+		{in: "吾輩は猫である。名前はまだない。", wantErr: false, head: 'ワ', last: 'イ'},
+		{in: "English!", wantErr: false, head: 'イ', last: 'ュ'},
+		{in: "ostrich", wantErr: false, head: 'オ', last: 'チ'},
+		{in: "Japan confirmed punk.", wantErr: false, head: 'ジ', last: 'ク'},
+		{in: "mix English and 日本語", wantErr: false, head: 'ミ', last: 'ゴ'},
 		{in: "！？", wantErr: true, head: 0, last: 0},
 	}
 
@@ -95,10 +86,7 @@ func TestEffectiveHeadAndList(t *testing.T) {
 			if err != nil {
 				t.Errorf("effectiveHeadAndLast(%q) = %q, %q, %v; want no error", tt.in, head, last, err)
 			}
-			if head != tt.head {
-				t.Errorf("effectiveHeadAndLast(%q) = %q, %q; want %q, %q", tt.in, head, last, tt.head, tt.last)
-			}
-			if last != tt.last {
+			if head != tt.head || last != tt.last {
 				t.Errorf("effectiveHeadAndLast(%q) = %q, %q; want %q, %q", tt.in, head, last, tt.head, tt.last)
 			}
 		}
