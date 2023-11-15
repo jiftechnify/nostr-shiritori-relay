@@ -72,6 +72,7 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		{in: "English!", wantErr: false, head: 'イ', last: 'ュ'},
 		{in: "ostrich", wantErr: false, head: 'オ', last: 'チ'},
 		{in: "Japan confirmed punk.", wantErr: false, head: 'ジ', last: 'ク'},
+		{in: "Let's go at 9 o'clock!", wantErr: false, head: 'レ', last: 'ク'},
 		{in: "mix English and 日本語", wantErr: false, head: 'ミ', last: 'ゴ'},
 		{in: "！？", wantErr: true, head: 0, last: 0},
 	}

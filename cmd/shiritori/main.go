@@ -21,10 +21,15 @@ import (
 var (
 	//go:embed bep-eng.dic
 	engDictData string
-	//go:embed custom_dict.txt
+	//go:embed custom.dic
 	customDictData string
 
 	readingDict map[string]string = make(map[string]string)
+
+	//go:embed replace.dic
+	replaceDictData string
+
+	replaceDict map[*regexp.Regexp]string = make(map[*regexp.Regexp]string)
 
 	kagomeTokenizer *tokenizer.Tokenizer
 )
@@ -42,6 +47,20 @@ func parseReadingDict(s string) {
 	}
 }
 
+func parseReplaceDict(s string) {
+	for _, line := range strings.Split(s, "\n") {
+		if len(line) == 0 || line[0] == '#' {
+			continue
+		}
+		split := strings.Split(line, " ")
+		if len(split) < 2 {
+			continue
+		}
+		re := regexp.MustCompile(fmt.Sprintf("\b(?i:%s)\b", split[0]))
+		replaceDict[re] = split[1]
+	}
+}
+
 func initialize() error {
 	var err error
 	kagomeTokenizer, err = tokenizer.New(ipaneologd.Dict(), tokenizer.OmitBosEos())
@@ -51,6 +70,8 @@ func initialize() error {
 
 	parseReadingDict(engDictData)
 	parseReadingDict(customDictData)
+
+	parseReplaceDict(replaceDictData)
 
 	return nil
 }
@@ -351,10 +372,17 @@ func normalizeKanaAt(rs []rune, i int) rune {
 //   - normalizing various space charcters to the "normal" space
 //   - removing all emojis
 //   - trimming trailing period
+//   - replacing words in replace dictionary
 //
-// trimming trailing period is necessary because kagome tokenizer sometimes group "the last character of word and the next period" mistakenly. (e.g. "punk." -> ["pun", "k."])
+// trimming trailing period is necessary because kagome tokenizer sometimes group "the last character of word and the next period" mistakenly(e.g. "punk." -> ["pun", "k."]).
+// replacing words is necessary because kagome tokenizer tokenizes words that have "'" in wrong way.
 func normalizeText(s string) string {
-	return strings.TrimRight(emoji.RemoveAll(regexpSpaces.ReplaceAllString(s, " ")), ".")
+	res := strings.TrimRight(emoji.RemoveAll(regexpSpaces.ReplaceAllString(s, " ")), ".")
+	for re, repl := range replaceDict {
+		res = re.ReplaceAllString(res, repl)
+	}
+	fmt.Println(s, res)
+	return res
 }
 
 // returns head and last kana of reading of the text. resulting kana will be normalized to fullwith katakana.
