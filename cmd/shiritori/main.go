@@ -133,8 +133,7 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 }
 
 var nonRestrictedKinds = map[int]struct{}{
-	nostr.KindSetMetadata: {},
-	nostr.KindReaction:    {},
+	nostr.KindReaction: {},
 }
 
 func hasTagOfName(event *nostr.Event, name string) bool {
