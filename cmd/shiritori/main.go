@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	_ "embed"
 	"errors"
 	"fmt"
@@ -24,14 +25,23 @@ var (
 	//go:embed custom.dic
 	customDictData string
 
-	readingDict map[string]string = make(map[string]string)
+	readingDict = make(map[string]string)
 
 	//go:embed replace.dic
 	replaceDictData string
 
-	replaceDict map[*regexp.Regexp]string = make(map[*regexp.Regexp]string)
+	replaceDict = make(map[*regexp.Regexp]string)
 
 	kagomeTokenizer *tokenizer.Tokenizer
+)
+
+var (
+	nonRestrictedPubkeys = make(map[string]struct{})
+)
+
+var (
+	regexpCommands  = regexp.MustCompile(`^!.+$`)
+	regexpHexPubkey = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
 
 func parseReadingDict(s string) {
@@ -61,6 +71,26 @@ func parseReplaceDict(s string) {
 	}
 }
 
+func readNonRestrictedPubkeys() error {
+	f, err := os.Open("./resource/non_restrected_pubkeys.txt")
+	if err != nil {
+		log.Printf("failed to open file of non-restricted pubkeys list: %v", err)
+		log.Print("assuming all pubkeys are restricted")
+		return nil
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		pk := scanner.Text()
+		if !regexpHexPubkey.MatchString(pk) {
+			return fmt.Errorf("malformed pubkey in non-restricted pubkeys list: %s", pk)
+		}
+		nonRestrictedPubkeys[scanner.Text()] = struct{}{}
+	}
+	return nil
+}
+
 func initialize() error {
 	var err error
 	kagomeTokenizer, err = tokenizer.New(ipaneologd.Dict(), tokenizer.OmitBosEos())
@@ -73,6 +103,9 @@ func initialize() error {
 
 	parseReplaceDict(replaceDictData)
 
+	if err := readNonRestrictedPubkeys(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -97,6 +130,15 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 	// reject replies
 	if hasTagOfName(input.Event, "e") {
 		return input.ShadowReject()
+	}
+
+	// accept notes from non-restricted pubkeys (bots)
+	if _, ok := nonRestrictedPubkeys[input.Event.PubKey]; ok {
+		return input.Accept()
+	}
+	// accept commands to bot
+	if regexpCommands.MatchString(input.Event.Content) {
+		return input.Accept()
 	}
 
 	// shiritori judgement
