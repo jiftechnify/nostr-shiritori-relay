@@ -1,6 +1,6 @@
 services:
   strfry_shiritori:
-    build: .
+    build: ./sifter
     container_name: strfry_shiritori
     command: --config=config/strfry.conf relay
     volumes:

@@ -1,1 +1,6 @@
 web
+*.code-workspace
+resource/*
+!resource/.gitkeep
+strfry-db/*
+!strfry-db/.gitkeep
