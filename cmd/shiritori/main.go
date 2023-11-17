@@ -422,7 +422,6 @@ func normalizeText(s string) string {
 	for re, repl := range replaceDict {
 		res = re.ReplaceAllString(res, repl)
 	}
-	fmt.Println(s, res)
 	return res
 }
 
@@ -430,7 +429,6 @@ func normalizeText(s string) string {
 func effectiveHeadAndLast(s string) (rune, rune, error) {
 	normalized := normalizeText(s)
 	tokens := kagomeTokenizer.Tokenize(normalized)
-	fmt.Println(tokens)
 
 	var (
 		h = 0
