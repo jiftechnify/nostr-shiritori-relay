@@ -36,7 +36,7 @@ var (
 )
 
 func readNonRestrictedPubkeys() error {
-	f, err := os.Open(filepath.Join(resourceDirPath, "non_restrected_pubkeys.txt"))
+	f, err := os.Open(filepath.Join(resourceDirPath, "non_restricted_pubkeys.txt"))
 	if err != nil {
 		log.Printf("failed to open file of non-restricted pubkeys list: %v", err)
 		log.Print("assuming all pubkeys are restricted")
