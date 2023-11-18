@@ -50,15 +50,37 @@ const commands: CommandDef[] = [
     key: "ping",
     trigger: /^ping|(生|い)き(て|と)る\?$/i,
     allowTrailingQuestions: false,
-    handle: (_, matches) => {
-      const t = matches[2] ?? "て";
-      return [
-        {
-          kind: 1,
-          content: `生き${t}るよ！`,
-          tags: [],
-        },
-      ];
+    handle: async (_, matches) => {
+      try {
+        const apiBaseUrl = Deno.env.get("YOMI_API_BASE_URL");
+        if (apiBaseUrl === undefined) {
+          throw new Error("YOMI_API_BASE_URL is not defined");
+        }
+        const apiHealthResp = await fetch(`${apiBaseUrl}/health`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (!apiHealthResp.ok) {
+          throw new Error("yomi api is not healthy");
+        }
+
+        const t = matches[2] ?? "て";
+        return [
+          {
+            kind: 1,
+            content: `生き${t}るよ！`,
+            tags: [],
+          },
+        ];
+      } catch (e) {
+        console.error("system is unhealthy:", e);
+        return [
+          {
+            kind: 1,
+            content: "調子が悪いみたい…",
+            tags: [],
+          },
+        ];
+      }
     },
   },
   {
@@ -78,34 +100,34 @@ const commands: CommandDef[] = [
 ];
 
 export const matchCommand = (
-  cmdEv: NostrEvent
+  input: string
 ): { cmdDef: CommandDef; matches: RegExpMatchArray } | undefined => {
-  if (!cmdEv.content.startsWith("!")) {
-    console.log("not a command:", cmdEv.content);
+  if (!input.startsWith("!")) {
+    console.log("not a command:", input);
     return undefined;
   }
-  const rawCmd = cmdEv.content.substring(1);
+  const rawCmd = input.substring(1);
   console.log("received:", rawCmd);
 
   for (const cmdDef of commands) {
     const cmd = cmdDef.allowTrailingQuestions
       ? rawCmd.replaceAll(/(\?|？)+$/g, "")
       : rawCmd;
-      
+
     const matches = cmd.match(cmdDef.trigger);
     if (matches !== null) {
-      console.log("command matched! ", cmdDef.key)
+      console.log("command matched!", cmdDef.key);
       return { cmdDef, matches };
     }
   }
-  console.log("no commands matched")
+  console.log("no commands matched");
   return undefined;
 };
 
 export const handleCommand = async (
   cmdEv: NostrEvent
 ): Promise<NostrEventRaw[]> => {
-  const cmdMatch = matchCommand(cmdEv);
+  const cmdMatch = matchCommand(cmdEv.content);
   if (cmdMatch === undefined) {
     return [];
   }
@@ -128,4 +150,43 @@ export const handleCommand = async (
       },
     ];
   }
+};
+
+export const launchCmdChecker = () => {
+  const serve = async () => {
+    const resouceDir = Deno.env.get("RESOURCE_DIR");
+    if (resouceDir === undefined) {
+      console.error("RESOURCE_DIR is not defined");
+      Deno.exit(1);
+    }
+
+    const sockPath = join(resouceDir, "bot_cmd_check.sock");
+    try {
+      Deno.removeSync(sockPath);
+    } catch (err) {
+      if (!(err instanceof Deno.errors.NotFound)) {
+        console.error(err);
+        Deno.exit(1);
+      }
+    }
+
+    const listener = Deno.listen({ transport: "unix", path: sockPath });
+    while (true) {
+      const conn = await listener.accept();
+      const buf = new Uint8Array(1024);
+      await conn.read(buf);
+      const req = new TextDecoder().decode(buf);
+
+      console.log("command check request!");
+      const match = matchCommand(req);
+      const resp = match !== undefined ? "ok" : "ng";
+      await conn.write(new TextEncoder().encode(resp));
+      conn.close();
+    }
+  };
+
+  serve().catch((err) => {
+    console.error(err);
+    Deno.exit(1);
+  });
 };

@@ -7,6 +7,9 @@ services:
       - ./config:/app/config
       - ./resource:/app/resource
       - ./strfry-db:/app/strfry-db
+    environment:
+      - RESOURCE_DIR
+      - YOMI_API_BASE_URL
     pid: host
     restart: unless-stopped
     logging:
