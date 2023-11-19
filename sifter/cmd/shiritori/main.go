@@ -98,11 +98,13 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 
 	// accept notes from non-restricted pubkeys (bots)
 	if _, ok := nonRestrictedPubkeys[input.Event.PubKey]; ok {
+		log.Printf("accepting note from non-restricted pubkey: %s", input.Event.Content)
 		return input.Accept()
 	}
 	// accept bot commands
 	if regexpCommands.MatchString(input.Event.Content) {
 		if isCommandValid(input.Event.Content) {
+			log.Printf("accepting bot command: %s", input.Event.Content)
 			return input.Accept()
 		} else {
 			return input.Reject("blocked: bot command not supported")
@@ -120,8 +122,6 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 		return input.Reject("blocked: couldn't determine head/last of reading of content")
 	}
 
-	log.Printf("content: %s, head: %c, last: %c", input.Event.Content, hl.Head, hl.Last)
-
 	f, err := os.OpenFile(filepath.Join(resourceDirPath, "last_kana.txt"), os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return nil, err
@@ -137,6 +137,7 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 		prevLast := []rune(s)[0]
 
 		if !isShiritoriConnected(prevLast, hl.Head) {
+			log.Printf("❌Rejected! content: %s, head: %c, last: %c", input.Event.Content, hl.Head, hl.Last)
 			return input.Reject("blocked: shiritori not connected")
 		}
 	}
@@ -144,6 +145,7 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 	if err := saveLastKana(f, hl.Last); err != nil {
 		return nil, err
 	}
+	log.Printf("✅Accepted! content: %s, head: %c, last: %c", input.Event.Content, hl.Head, hl.Last)
 	return input.Accept()
 }
 
