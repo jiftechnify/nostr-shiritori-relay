@@ -1,12 +1,15 @@
 services:
   strfry_shiritori:
-    build: .
+    build: ./sifter
     container_name: strfry_shiritori
     command: --config=config/strfry.conf relay
     volumes:
       - ./config:/app/config
       - ./resource:/app/resource
       - ./strfry-db:/app/strfry-db
+    environment:
+      - RESOURCE_DIR
+      - YOMI_API_BASE_URL
     pid: host
     restart: unless-stopped
     logging:

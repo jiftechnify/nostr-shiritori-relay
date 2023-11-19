@@ -1,0 +1,17 @@
+# Custom English word readings dictionary. Take precedence of ordinal dict.
+#
+# Follow the format of bep-eng.dic:
+#
+# <English word in UPPER CASE> <Reading in カタカナ>
+#
+NOSTR ノスター
+NOSTRICH ノストリッチ
+BOT ボット
+DAMUS ダムス
+NOSTRADAMUS ノストラダムス
+AMETHYST アメジスト
+SNORT スノート
+NOSTTER ノスッター
+HABLA ハブラ
+YAKIHONNE ヤキホンネ
+NOSTATUS ノステータス

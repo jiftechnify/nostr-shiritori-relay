@@ -5,7 +5,6 @@ go 1.21.3
 require (
 	github.com/jiftechnify/strfry-evsifter v0.1.0
 	github.com/nbd-wtf/go-nostr v0.24.2
-	github.com/tmdvs/Go-Emoji-Utils v1.1.0
 )
 
 require (

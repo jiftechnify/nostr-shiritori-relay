@@ -5,3 +5,5 @@ Play: https://srtrelay.c-stellar.net/
 
 ## License
 MIT
+
+`bep-eng.dic` is obtained from https://fastapi.metacpan.org/source/MASH/Lingua-JA-Yomi-0.01/lib/Lingua/JA.
