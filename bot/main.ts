@@ -49,3 +49,4 @@ rxNostr.send(
   },
   { seckey: env.PRIVATE_KEY }
 );
+console.log("Ritrin launched !(ง๑ •̀_•́)ง");
