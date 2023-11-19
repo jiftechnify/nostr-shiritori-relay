@@ -173,11 +173,13 @@ export const launchCmdChecker = () => {
     const listener = Deno.listen({ transport: "unix", path: sockPath });
     while (true) {
       const conn = await listener.accept();
-      const buf = new Uint8Array(1024);
-      await conn.read(buf);
-      const req = new TextDecoder().decode(buf);
 
-      console.log("command check request!");
+      const buf = new Uint8Array(1024);
+      const n = await conn.read(buf);
+
+      const req = new TextDecoder().decode(n === null ? buf : buf.slice(0, n));
+
+      console.log("requested command check...");
       const match = matchCommand(req);
       const resp = match !== undefined ? "ok" : "ng";
       await conn.write(new TextEncoder().encode(resp));

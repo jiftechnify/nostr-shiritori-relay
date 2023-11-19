@@ -148,50 +148,6 @@ var (
 	regexpAllHwKana     = regexp.MustCompile(`^[ｦ-ﾟ]+$`)
 )
 
-var allowedConnections = map[rune][]rune{
-	'ァ': {'ア'},
-	'ィ': {'イ'},
-	'ゥ': {'ウ'},
-	'ェ': {'エ'},
-	'ォ': {'オ'},
-	'ガ': {'カ'},
-	'ギ': {'キ'},
-	'グ': {'ク'},
-	'ゲ': {'ケ'},
-	'ゴ': {'コ'},
-	'ザ': {'サ'},
-	'ジ': {'シ'},
-	'ズ': {'ス'},
-	'ゼ': {'セ'},
-	'ゾ': {'ソ'},
-	'ダ': {'タ'},
-	'ヂ': {'チ'},
-	'ッ': {'ツ'},
-	'ヅ': {'ツ'},
-	'デ': {'テ'},
-	'ド': {'ト'},
-	'バ': {'ハ'},
-	'パ': {'ハ'},
-	'ビ': {'ヒ'},
-	'ピ': {'ヒ'},
-	'ブ': {'フ'},
-	'プ': {'フ'},
-	'ベ': {'ヘ'},
-	'ペ': {'ヘ'},
-	'ボ': {'ホ'},
-	'ポ': {'ホ'},
-	'ャ': {'ヤ'},
-	'ュ': {'ユ'},
-	'ョ': {'ヨ'},
-	'ヮ': {'ワ'},
-	'ヰ': {'イ'},
-	'ヱ': {'エ'},
-	'ヲ': {'オ'},
-	'ヴ': {'ウ', 'ブ'},
-	'ヵ': {'カ'},
-	'ヶ': {'ケ'},
-}
-
 var hwKana2FwKana = map[rune]rune{
 	'ｦ': 'ヲ',
 	'ｧ': 'ァ',
@@ -492,19 +448,4 @@ func lastKana(r string) rune {
 		}
 	}
 	return 0
-}
-
-// pre-condition: prevLast and currHead are normalized to fullwidth katakana
-func isShiritoriConnected(prevLast, currHead rune) bool {
-	if prevLast == currHead {
-		return true
-	}
-	if allowed, ok := allowedConnections[prevLast]; ok {
-		for _, r := range allowed {
-			if r == currHead {
-				return true
-			}
-		}
-	}
-	return false
 }

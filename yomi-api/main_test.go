@@ -93,25 +93,3 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		}
 	}
 }
-
-func TestIsShiritoriConnected(t *testing.T) {
-	tests := []struct {
-		prevLast rune
-		currHead rune
-		want     bool
-	}{
-		{prevLast: 'ア', currHead: 'ア', want: true},
-		{prevLast: 'ア', currHead: 'イ', want: false},
-		{prevLast: 'ガ', currHead: 'カ', want: true},
-		{prevLast: 'カ', currHead: 'ガ', want: false},
-		{prevLast: 'ッ', currHead: 'ツ', want: true},
-		{prevLast: 'ヴ', currHead: 'ウ', want: true},
-		{prevLast: 'ヴ', currHead: 'ブ', want: true},
-	}
-
-	for _, tt := range tests {
-		if got := isShiritoriConnected(tt.prevLast, tt.currHead); got != tt.want {
-			t.Errorf("isConnectionAllowed(%q, %q) = %v; want %v", tt.prevLast, tt.currHead, got, tt.want)
-		}
-	}
-}

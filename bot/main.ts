@@ -19,7 +19,6 @@ const botPubkey = getPublicKey(env.PRIVATE_KEY);
 
 const rxNostr = createRxNostr();
 await rxNostr.switchRelays([env.SRTRELAY_URL]);
-console.log(rxNostr.getRelays());
 
 const req = createRxForwardReq();
 
