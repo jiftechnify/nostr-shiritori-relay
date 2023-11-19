@@ -16,6 +16,22 @@ type CommandDef = {
   ) => NostrEventPre[] | Promise<NostrEventPre[]>;
 };
 
+const plainNote = (content: string): NostrEventPre => {
+  return {
+    kind: 1,
+    content,
+    tags: [],
+  };
+};
+
+const silentMention = (target: NostrEvent, content: string): NostrEventPre => {
+  return {
+    kind: 1,
+    content,
+    tags: [["e", target.id, "", "mention"]],
+  };
+};
+
 const helpText = `「!」からはじまる投稿がコマンドとして扱われます(例: !次)。
 
 - next,次: 次の投稿をどの文字からはじめればいいか答えます。
@@ -36,22 +52,16 @@ const commands: CommandDef[] = [
     key: "next",
     trigger: /^next|(次|つぎ)は?((何|なに)(から)?)?$/i,
     allowTrailingQuestions: true,
-    handle: async () => {
+    handle: async (event) => {
       const next = await getNextKana();
-      return [
-        {
-          kind: 1,
-          content: `次は「${next}」から！`,
-          tags: [],
-        },
-      ];
+      return [silentMention(event, `次は「${next}」から！`)];
     },
   },
   {
     key: "ping",
     trigger: /^ping|(生|い)き(て|と)る\?$/i,
     allowTrailingQuestions: false,
-    handle: async (_, matches) => {
+    handle: async (event, matches) => {
       try {
         const apiBaseUrl = Deno.env.get("YOMI_API_BASE_URL");
         if (apiBaseUrl === undefined) {
@@ -65,22 +75,10 @@ const commands: CommandDef[] = [
         }
 
         const t = matches[2] ?? "て";
-        return [
-          {
-            kind: 1,
-            content: `生き${t}るよ！`,
-            tags: [],
-          },
-        ];
+        return [silentMention(event, `生き${t}るよ！`)];
       } catch (e) {
         log.error(`something wrong with the system: ${e}`);
-        return [
-          {
-            kind: 1,
-            content: "調子が悪いみたい…",
-            tags: [],
-          },
-        ];
+        return [silentMention(event, "調子が悪いみたい…")];
       }
     },
   },
@@ -89,13 +87,7 @@ const commands: CommandDef[] = [
     trigger: /^help|ヘルプ$/i,
     allowTrailingQuestions: false,
     handle: () => {
-      return [
-        {
-          kind: 1,
-          content: helpText,
-          tags: [],
-        },
-      ];
+      return [plainNote(helpText)];
     },
   },
 ];
@@ -108,7 +100,7 @@ export const matchCommand = (
     return undefined;
   }
   const rawCmd = input.substring(1);
-  log.info(`received: ${rawCmd}`)
+  log.info(`received: ${rawCmd}`);
 
   for (const cmdDef of commands) {
     const cmd = cmdDef.allowTrailingQuestions
@@ -117,11 +109,11 @@ export const matchCommand = (
 
     const matches = cmd.match(cmdDef.trigger);
     if (matches !== null) {
-      log.info(`command matched: ${cmdDef.key}`)
+      log.info(`command matched: ${cmdDef.key}`);
       return { cmdDef, matches };
     }
   }
-  log.info("no commands matched")
+  log.info("no commands matched");
   return undefined;
 };
 

@@ -18,7 +18,6 @@ log.setup({
       }
     }),
   },
-
   loggers: {
     default: {
       handlers: ["console"],
