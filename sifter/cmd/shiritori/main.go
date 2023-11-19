@@ -91,15 +91,16 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 		return input.ShadowReject()
 	}
 	// kind: 1 (Text Note)
-	// reject replies
-	if hasTagOfName(input.Event, "e") {
-		return input.ShadowReject()
-	}
-
 	// accept notes from non-restricted pubkeys (bots)
 	if _, ok := nonRestrictedPubkeys[input.Event.PubKey]; ok {
 		log.Printf("accepting note from non-restricted pubkey: %s", input.Event.Content)
 		return input.Accept()
+	}
+
+	// reject replies
+	if hasTagOfName(input.Event, "e") {
+		log.Print("rejecting replies")
+		return input.ShadowReject()
 	}
 	// accept bot commands
 	if regexpCommands.MatchString(input.Event.Content) {
