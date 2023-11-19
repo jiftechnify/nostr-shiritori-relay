@@ -1,4 +1,5 @@
 import * as dotenv from "https://deno.land/std@0.207.0/dotenv/mod.ts";
+import * as log from "https://deno.land/std@0.207.0/log/mod.ts";
 import {
   createRxForwardReq,
   createRxNostr,
@@ -8,6 +9,21 @@ import {
 } from "npm:rx-nostr@1.8.1";
 import { filter } from "npm:rxjs@7.8.1";
 import { handleCommand, launchCmdChecker } from "./commands.ts";
+
+log.setup({
+  handlers: {
+    console: new log.handlers.ConsoleHandler("DEBUG", {
+      formatter: ({ levelName, datetime, msg }) => {
+        return `${datetime.toLocaleString()} [${levelName.padEnd(5)}] ${msg}`
+      }
+    }),
+  },
+  loggers: {
+    default: {
+      handlers: ["console"],
+    },
+  },
+});
 
 type EnvVars = {
   SRTRELAY_URL: string;
@@ -27,7 +43,9 @@ rxNostr
   .pipe(
     verify(),
     uniq(),
-    filter(({ event }) => event.pubkey !== botPubkey && event.content.startsWith("!"))
+    filter(
+      ({ event }) => event.pubkey !== botPubkey && event.content.startsWith("!")
+    )
   )
   .subscribe(async ({ event }) => {
     const res = await handleCommand(event);
@@ -49,4 +67,4 @@ rxNostr.send(
   },
   { seckey: env.PRIVATE_KEY }
 );
-console.log("Ritrin launched !(ง๑ •̀_•́)ง");
+log.info("Ritrin launched !(ง๑ •̀_•́)ง");

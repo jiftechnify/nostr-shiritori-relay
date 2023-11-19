@@ -1,3 +1,4 @@
+import * as log from "https://deno.land/std@0.207.0/log/mod.ts";
 import { join } from "https://deno.land/std@0.207.0/path/mod.ts";
 import { type EventPacket } from "npm:rx-nostr@1.8.1";
 
@@ -13,6 +14,22 @@ type CommandDef = {
     event: NostrEvent,
     matches: RegExpMatchArray
   ) => NostrEventPre[] | Promise<NostrEventPre[]>;
+};
+
+const plainNote = (content: string): NostrEventPre => {
+  return {
+    kind: 1,
+    content,
+    tags: [],
+  };
+};
+
+const silentMention = (target: NostrEvent, content: string): NostrEventPre => {
+  return {
+    kind: 1,
+    content,
+    tags: [["e", target.id, "", "mention"]],
+  };
 };
 
 const helpText = `「!」からはじまる投稿がコマンドとして扱われます(例: !次)。
@@ -35,22 +52,16 @@ const commands: CommandDef[] = [
     key: "next",
     trigger: /^next|(次|つぎ)は?((何|なに)(から)?)?$/i,
     allowTrailingQuestions: true,
-    handle: async () => {
+    handle: async (event) => {
       const next = await getNextKana();
-      return [
-        {
-          kind: 1,
-          content: `次は「${next}」から！`,
-          tags: [],
-        },
-      ];
+      return [silentMention(event, `次は「${next}」から！`)];
     },
   },
   {
     key: "ping",
     trigger: /^ping|(生|い)き(て|と)る\?$/i,
     allowTrailingQuestions: false,
-    handle: async (_, matches) => {
+    handle: async (event, matches) => {
       try {
         const apiBaseUrl = Deno.env.get("YOMI_API_BASE_URL");
         if (apiBaseUrl === undefined) {
@@ -64,22 +75,10 @@ const commands: CommandDef[] = [
         }
 
         const t = matches[2] ?? "て";
-        return [
-          {
-            kind: 1,
-            content: `生き${t}るよ！`,
-            tags: [],
-          },
-        ];
+        return [silentMention(event, `生き${t}るよ！`)];
       } catch (e) {
-        console.error("system is unhealthy:", e);
-        return [
-          {
-            kind: 1,
-            content: "調子が悪いみたい…",
-            tags: [],
-          },
-        ];
+        log.error(`something wrong with the system: ${e}`);
+        return [silentMention(event, "調子が悪いみたい…")];
       }
     },
   },
@@ -88,13 +87,7 @@ const commands: CommandDef[] = [
     trigger: /^help|ヘルプ$/i,
     allowTrailingQuestions: false,
     handle: () => {
-      return [
-        {
-          kind: 1,
-          content: helpText,
-          tags: [],
-        },
-      ];
+      return [plainNote(helpText)];
     },
   },
 ];
@@ -103,11 +96,11 @@ export const matchCommand = (
   input: string
 ): { cmdDef: CommandDef; matches: RegExpMatchArray } | undefined => {
   if (!input.startsWith("!")) {
-    console.log("not a command:", input);
+    log.info(`not a command: ${input}`);
     return undefined;
   }
   const rawCmd = input.substring(1);
-  console.log("received:", rawCmd);
+  log.info(`received: ${rawCmd}`);
 
   for (const cmdDef of commands) {
     const cmd = cmdDef.allowTrailingQuestions
@@ -116,11 +109,11 @@ export const matchCommand = (
 
     const matches = cmd.match(cmdDef.trigger);
     if (matches !== null) {
-      console.log("command matched!", cmdDef.key);
+      log.info(`command matched: ${cmdDef.key}`);
       return { cmdDef, matches };
     }
   }
-  console.log("no commands matched");
+  log.info("no commands matched");
   return undefined;
 };
 
@@ -140,7 +133,7 @@ export const handleCommand = async (
       created_at: cmdEv.created_at + 1 + i,
     }));
   } catch (e) {
-    console.error("failed to handle command:", e);
+    log.error(`failed to handle command: ${e}`);
     return [
       {
         kind: 1,
@@ -156,7 +149,7 @@ export const launchCmdChecker = () => {
   const serve = async () => {
     const resouceDir = Deno.env.get("RESOURCE_DIR");
     if (resouceDir === undefined) {
-      console.error("RESOURCE_DIR is not defined");
+      log.error("RESOURCE_DIR is not defined");
       Deno.exit(1);
     }
 
@@ -165,7 +158,7 @@ export const launchCmdChecker = () => {
       Deno.removeSync(sockPath);
     } catch (err) {
       if (!(err instanceof Deno.errors.NotFound)) {
-        console.error(err);
+        log.error(`failed to remove unix socket: ${err}`);
         Deno.exit(1);
       }
     }
@@ -179,7 +172,7 @@ export const launchCmdChecker = () => {
 
       const req = new TextDecoder().decode(n === null ? buf : buf.slice(0, n));
 
-      console.log("requested command check...");
+      log.info(`requested command check...`);
       const match = matchCommand(req);
       const resp = match !== undefined ? "ok" : "ng";
       await conn.write(new TextEncoder().encode(resp));
@@ -188,7 +181,7 @@ export const launchCmdChecker = () => {
   };
 
   serve().catch((err) => {
-    console.error(err);
+    log.error(`error from launch command checker: ${err}`);
     Deno.exit(1);
   });
 };

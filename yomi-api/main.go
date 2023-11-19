@@ -286,6 +286,20 @@ func isKana(r rune) bool {
 	return isHiragana(r) || isFullwidthKatakana(r) || isHalfwidthKatakana(r)
 }
 
+// normalize single kana rune to fullwidth katakana.
+func normalizeSingleKana(r rune) rune {
+	if isFullwidthKatakana(r) {
+		return r
+	}
+	if isHiragana(r) {
+		return r + 0x60
+	}
+	if isHalfwidthKatakana(r) {
+		return hwKana2FwKana[r]
+	}
+	return 0
+}
+
 // normalize kana rs[i] to fullwidth katakana.
 // if rs[i] is halfwidth katakana that have (han-)dakuon form and rs[i+1] is (han-)dakuten, result will be (han-)dakuon form.
 // if input is invalid, return 0.
@@ -313,7 +327,6 @@ func normalizeKanaAt(rs []rune, i int) rune {
 		}
 		return hwKana2FwKana[r]
 	}
-
 	return 0
 }
 
@@ -366,19 +379,23 @@ func effectiveHeadAndLast(s string) (rune, rune, error) {
 }
 
 func headKanaOfToken(t tokenizer.Token) rune {
+	// 1. get head kana from reading of the token
 	if r, ok := t.Reading(); ok {
 		if k := headKana(r); k != 0 {
 			return k
 		}
 	}
 
+	// 2. if the token is likely English word...
 	if regexpAllEnAlphabet.MatchString(t.Surface) {
+		// 2-1. get reading from dictionary and get head kana
 		upper := strings.ToUpper(t.Surface)
 		if r, ok := readingDict[upper]; ok {
 			if k := headKana(r); k != 0 {
 				return k
 			}
 		}
+		// 2-2. if reading is not available, use literal reading of first alphabet
 		if r, ok := enAlphabetReadings[rune(upper[0])]; ok {
 			if k := headKana(r); k != 0 {
 				return k
@@ -387,9 +404,16 @@ func headKanaOfToken(t tokenizer.Token) rune {
 		return 0
 	}
 
+	// 3. if the token consists of only halfwidth katakana, get head and convert it to fullwidth
 	if regexpAllHwKana.MatchString(t.Surface) {
 		return normalizeKanaAt([]rune(t.Surface), 0)
 	}
+
+	// 4. get head kana from surface form of the token
+	if k := headKana(t.Surface); k != 0 {
+		return normalizeSingleKana(k)
+	}
+
 	return 0
 }
 
@@ -403,19 +427,23 @@ func headKana(r string) rune {
 }
 
 func lastKanaOfToken(t tokenizer.Token) rune {
+	// 1. get last kana from reading of the token
 	if r, ok := t.Reading(); ok {
 		if k := lastKana(r); k != 0 {
 			return k
 		}
 	}
 
+	// 2. if the token is likely English word...
 	if regexpAllEnAlphabet.MatchString(t.Surface) {
+		// 2-1. get reading from dictionary and get last kana
 		upper := strings.ToUpper(t.Surface)
 		if r, ok := readingDict[upper]; ok {
 			if k := lastKana(r); k != 0 {
 				return k
 			}
 		}
+		// 2-2. if reading is not available, use literal reading of last alphabet
 		if r, ok := enAlphabetReadings[rune(upper[len(upper)-1])]; ok {
 			if k := lastKana(r); k != 0 {
 				return k
@@ -424,6 +452,7 @@ func lastKanaOfToken(t tokenizer.Token) rune {
 		return 0
 	}
 
+	// 3. if the token consists of only halfwidth katakana, get last and convert it to fullwidth
 	if regexpAllHwKana.MatchString(t.Surface) {
 		rs := []rune(t.Surface)
 		l := len(rs) - 1
@@ -436,6 +465,11 @@ func lastKanaOfToken(t tokenizer.Token) rune {
 			return 0
 		}
 		return normalizeKanaAt(rs, l)
+	}
+
+	// 4. get last kana from surface form of the token
+	if k := lastKana(t.Surface); k != 0 {
+		return normalizeSingleKana(k)
 	}
 	return 0
 }
