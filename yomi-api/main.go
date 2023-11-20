@@ -11,8 +11,6 @@ import (
 	"regexp"
 	"strings"
 
-	emoji "github.com/tmdvs/Go-Emoji-Utils"
-
 	ipaneologd "github.com/ikawaha/kagome-dict-ipa-neologd"
 	"github.com/ikawaha/kagome/v2/tokenizer"
 )
@@ -142,7 +140,8 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	regexpSpaces = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
+	regexpSpaces      = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
+	regexpCustomEmoji = regexp.MustCompile(`:[a-zA-Z0-9_]+:`)
 
 	regexpAllEnAlphabet = regexp.MustCompile(`^[a-zA-Z]+$`)
 	regexpAllHwKana     = regexp.MustCompile(`^[ｦ-ﾟ]+$`)
@@ -334,14 +333,16 @@ func normalizeKanaAt(rs []rune, i int) rune {
 //
 // normalization proecss includes:
 //   - normalizing various space charcters to the "normal" space
-//   - removing all emojis
+//   - removing custom emoji shortcode (e.g. ":foo:")
 //   - trimming trailing period
 //   - replacing words in replace dictionary
 //
 // trimming trailing period is necessary because kagome tokenizer sometimes group "the last character of word and the next period" mistakenly(e.g. "punk." -> ["pun", "k."]).
 // replacing words is necessary because kagome tokenizer tokenizes words that have "'" in wrong way.
 func normalizeText(s string) string {
-	res := strings.TrimRight(emoji.RemoveAll(regexpSpaces.ReplaceAllString(s, " ")), ".")
+	res := regexpSpaces.ReplaceAllString(s, " ")
+	res = regexpCustomEmoji.ReplaceAllString(res, " ")
+	res = strings.TrimRight(res, ".")
 	for re, repl := range replaceDict {
 		res = re.ReplaceAllString(res, repl)
 	}
