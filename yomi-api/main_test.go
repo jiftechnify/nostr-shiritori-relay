@@ -31,6 +31,24 @@ func TestNormalizeText(t *testing.T) {
 	}
 }
 
+func TestNaturalizeEnWordReading(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{in: "アブサードゥ", want: "アブサード"},
+		{in: "アドゥレッサビリティイ", want: "アドゥレッサビリティー"},
+		{in: "ウォウ", want: "ウォー"},
+		{in: "ウィロウ", want: "ウィロー"},
+	}
+
+	for _, tt := range tests {
+		if got := naturalizeEnWordReading(tt.in); got != tt.want {
+			t.Errorf("naturalizeEnWordReading(%q) = %q; want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
 func TestNormalizeKanaAt(t *testing.T) {
 	tests := []struct {
 		in   string
