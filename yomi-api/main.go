@@ -11,8 +11,6 @@ import (
 	"regexp"
 	"strings"
 
-	emoji "github.com/tmdvs/Go-Emoji-Utils"
-
 	ipaneologd "github.com/ikawaha/kagome-dict-ipa-neologd"
 	"github.com/ikawaha/kagome/v2/tokenizer"
 )
@@ -141,12 +139,35 @@ func handleHealth(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprintf(w, "ok")
 }
 
-var (
-	regexpSpaces = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
+// returns head and last kana of reading of the text. resulting kana will be normalized to fullwith katakana.
+func effectiveHeadAndLast(s string) (rune, rune, error) {
+	normalized := normalizeText(s)
+	tokens := kagomeTokenizer.Tokenize(normalized)
 
-	regexpAllEnAlphabet = regexp.MustCompile(`^[a-zA-Z]+$`)
-	regexpAllHwKana     = regexp.MustCompile(`^[ｦ-ﾟ]+$`)
-)
+	var (
+		h = 0
+		l = len(tokens) - 1
+
+		head rune
+		last rune
+	)
+
+	for ; h < len(tokens); h++ {
+		if head = headKanaOfToken(tokens[h]); head != 0 {
+			break
+		}
+	}
+	for ; l >= h; l-- {
+		if last = lastKanaOfToken(tokens[l]); last != 0 {
+			break
+		}
+	}
+
+	if head == 0 || last == 0 {
+		return 0, 0, errors.New("effectiveHeadAndLast: something wrong")
+	}
+	return head, last, nil
+}
 
 var hwKana2FwKana = map[rune]rune{
 	'ｦ': 'ヲ',
@@ -330,53 +351,60 @@ func normalizeKanaAt(rs []rune, i int) rune {
 	return 0
 }
 
+var (
+	regexpSpaces      = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
+	regexpCustomEmoji = regexp.MustCompile(`:[a-zA-Z0-9_]+:`)
+)
+
 // normalize the string for determining reading.
 //
 // normalization proecss includes:
 //   - normalizing various space charcters to the "normal" space
-//   - removing all emojis
+//   - removing custom emoji shortcode (e.g. ":foo:")
 //   - trimming trailing period
 //   - replacing words in replace dictionary
 //
 // trimming trailing period is necessary because kagome tokenizer sometimes group "the last character of word and the next period" mistakenly(e.g. "punk." -> ["pun", "k."]).
 // replacing words is necessary because kagome tokenizer tokenizes words that have "'" in wrong way.
 func normalizeText(s string) string {
-	res := strings.TrimRight(emoji.RemoveAll(regexpSpaces.ReplaceAllString(s, " ")), ".")
+	res := regexpSpaces.ReplaceAllString(s, " ")
+	res = regexpCustomEmoji.ReplaceAllString(res, " ")
+	res = strings.TrimRight(res, ".")
 	for re, repl := range replaceDict {
 		res = re.ReplaceAllString(res, repl)
 	}
 	return res
 }
 
-// returns head and last kana of reading of the text. resulting kana will be normalized to fullwith katakana.
-func effectiveHeadAndLast(s string) (rune, rune, error) {
-	normalized := normalizeText(s)
-	tokens := kagomeTokenizer.Tokenize(normalized)
-
-	var (
-		h = 0
-		l = len(tokens) - 1
-
-		head rune
-		last rune
-	)
-
-	for ; h < len(tokens); h++ {
-		if head = headKanaOfToken(tokens[h]); head != 0 {
-			break
-		}
-	}
-	for ; l >= h; l-- {
-		if last = lastKanaOfToken(tokens[l]); last != 0 {
-			break
-		}
-	}
-
-	if head == 0 || last == 0 {
-		return 0, 0, errors.New("effectiveHeadAndLast: something wrong")
-	}
-	return head, last, nil
+// credit to basic idea: https://gist.github.com/ikegami-yukino/2213879
+// only replaces end of readings, which affect shiritori connections.
+var enWordReadingNaturalizations = map[*regexp.Regexp]string{
+	regexp.MustCompile(`([ドト])ゥ$`):       "$1",
+	regexp.MustCompile(`([キシチニヒミリィ])イ$`): "${1}ー",
+	regexp.MustCompile(`ォウ$`):            "ォー",
+	regexp.MustCompile(`ロウ$`):            "ロー",
 }
+
+func naturalizeEnWordReading(r string) string {
+	res := r
+	for re, repl := range enWordReadingNaturalizations {
+		res = re.ReplaceAllString(res, repl)
+	}
+	return res
+}
+
+// pre-condition: word is uppercased
+func getEnWordReading(word string) (string, bool) {
+	if r, ok := readingDict[word]; ok {
+		return naturalizeEnWordReading(r), true
+	}
+	return "", false
+}
+
+var (
+	regexpAllEnAlphabet = regexp.MustCompile(`^[a-zA-Z]+$`)
+	regexpAllHwKana     = regexp.MustCompile(`^[ｦ-ﾟ]+$`)
+)
 
 func headKanaOfToken(t tokenizer.Token) rune {
 	// 1. get head kana from reading of the token
@@ -390,7 +418,7 @@ func headKanaOfToken(t tokenizer.Token) rune {
 	if regexpAllEnAlphabet.MatchString(t.Surface) {
 		// 2-1. get reading from dictionary and get head kana
 		upper := strings.ToUpper(t.Surface)
-		if r, ok := readingDict[upper]; ok {
+		if r, ok := getEnWordReading(upper); ok {
 			if k := headKana(r); k != 0 {
 				return k
 			}
@@ -438,7 +466,7 @@ func lastKanaOfToken(t tokenizer.Token) rune {
 	if regexpAllEnAlphabet.MatchString(t.Surface) {
 		// 2-1. get reading from dictionary and get last kana
 		upper := strings.ToUpper(t.Surface)
-		if r, ok := readingDict[upper]; ok {
+		if r, ok := getEnWordReading(upper); ok {
 			if k := lastKana(r); k != 0 {
 				return k
 			}

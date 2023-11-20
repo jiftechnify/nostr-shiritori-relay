@@ -6,5 +6,3 @@ github.com/ikawaha/kagome-dict/ipa v1.0.10 h1:wk9I21yg+fKdL6HJB9WgGiyXIiu1VttumJ
 github.com/ikawaha/kagome-dict/ipa v1.0.10/go.mod h1:rbaOKrF58zhtpV2+2sVZBj0sUSp9dVKPjr660MehJbs=
 github.com/ikawaha/kagome/v2 v2.9.4 h1:8TgrcS47+nVCIOyQJRE33+VAqQrdKIGuZ8QI9sHz95E=
 github.com/ikawaha/kagome/v2 v2.9.4/go.mod h1:OYzxPG9dQSalvznlcLNR8TEKpPwzKhnZszw9LLbf7e8=
-github.com/tmdvs/Go-Emoji-Utils v1.1.0 h1:gtPix7HZPrd49+MNDcuRLvv4xVNxCE5wgjqyuvmbyYg=
-github.com/tmdvs/Go-Emoji-Utils v1.1.0/go.mod h1:J82i2WeGn+Kz+T3s5v9+i/OJlvevIVfGZ6qXgqiNWBc=

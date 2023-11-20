@@ -13,6 +13,42 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func TestNormalizeText(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{in: "あいうえお", want: "あいうえお"},
+		{in: "hoge　fuga\npiyo", want: "hoge fuga piyo"},
+		{in: "わよ:wayo:", want: "わよ "},
+		{in: "Japan confirmed punk.", want: "Japan confirmed punk"},
+	}
+
+	for _, tt := range tests {
+		if got := normalizeText(tt.in); got != tt.want {
+			t.Errorf("normalizeText(%q) = %q; want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestNaturalizeEnWordReading(t *testing.T) {
+	tests := []struct {
+		in   string
+		want string
+	}{
+		{in: "アブサードゥ", want: "アブサード"},
+		{in: "アドゥレッサビリティイ", want: "アドゥレッサビリティー"},
+		{in: "ウォウ", want: "ウォー"},
+		{in: "ウィロウ", want: "ウィロー"},
+	}
+
+	for _, tt := range tests {
+		if got := naturalizeEnWordReading(tt.in); got != tt.want {
+			t.Errorf("naturalizeEnWordReading(%q) = %q; want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
 func TestNormalizeKanaAt(t *testing.T) {
 	tests := []struct {
 		in   string
@@ -76,6 +112,7 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		{in: "Japan confirmed punk.", wantErr: false, head: 'ジ', last: 'ク'},
 		{in: "Let's go at 9 o'clock!", wantErr: false, head: 'レ', last: 'ク'},
 		{in: "mix English and 日本語", wantErr: false, head: 'ミ', last: 'ゴ'},
+		{in: "🍕", wantErr: false, head: 'ピ', last: 'ザ'},
 		{in: "！？", wantErr: true, head: 0, last: 0},
 	}
 
