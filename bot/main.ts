@@ -1,6 +1,8 @@
 import * as dotenv from "https://deno.land/std@0.207.0/dotenv/mod.ts";
 import * as log from "https://deno.land/std@0.207.0/log/mod.ts";
 import {
+  ConnectionStatePacket,
+  RxNostr,
   createRxForwardReq,
   createRxNostr,
   getPublicKey,
@@ -68,8 +70,8 @@ rxnSrtrelayOnly
   .subscribe(async ({ event }) => {
     if (event.content.startsWith("!")) {
       // handle commands
-    const res = await handleCommand(event);
-    for (const e of res) {
+      const res = await handleCommand(event);
+      for (const e of res) {
         rxnSrtrelayOnly.send(e, { seckey: env.PRIVATE_KEY });
       }
     } else {
@@ -85,6 +87,34 @@ rxnSrtrelayOnly
     }
   });
 req.emit({ kinds: [1], limit: 0 });
+
+// monitor relay connection state and reconenct on error
+const onConnStateChange =
+  (rxn: RxNostr, poolName: string) =>
+  ({ from, state }: ConnectionStatePacket) => {
+    switch (state) {
+      case "ongoing":
+        log.info(`[${poolName}:${from}] connection state: ${state}`);
+        break;
+      case "reconnecting":
+        log.warning(`[${poolName}:${from}] connection state: ${state}`);
+        break;
+      case "error":
+      case "rejected":
+        log.error(`[${poolName}:${from}] connection state: ${state}`);
+        setTimeout(() => rxn.reconnect(from), 10000);
+        break;
+      default:
+        // no-op
+        break;
+    }
+  };
+rxnSrtrelayOnly
+  .createConnectionStateObservable()
+  .subscribe(onConnStateChange(rxnSrtrelayOnly, "srtrelayOnly"));
+rxnWriteRelays
+  .createConnectionStateObservable()
+  .subscribe(onConnStateChange(rxnWriteRelays, "writeRelays"));
 
 // launch command checker used by sifter
 launchCmdChecker();
