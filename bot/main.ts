@@ -10,12 +10,29 @@ import {
 import { filter } from "npm:rxjs@7.8.1";
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 
+type EnvVars = {
+  SRTRELAY_URL: string;
+  PRIVATE_KEY: string;
+};
+
+const writeRelays = [
+  "wss://relay-jp.nostr.wirednet.jp",
+  "wss://nostr.holybea.com",
+  "wss://nrelay-jp.c-stellar.net",
+  "wss://r.kojira.io",
+  "wss://relay-jp.shino3.net",
+  "wss://nostr-relay.nokotaro.com",
+  "wss://relay.nostr.wirednet.jp",
+  "wss://nos.lol",
+  "wss://relay.damus.io",
+];
+
 log.setup({
   handlers: {
     console: new log.handlers.ConsoleHandler("DEBUG", {
       formatter: ({ levelName, datetime, msg }) => {
-        return `${datetime.toLocaleString()} [${levelName.padEnd(5)}] ${msg}`
-      }
+        return `${datetime.toLocaleString()} [${levelName.padEnd(5)}] ${msg}`;
+      },
     }),
   },
   loggers: {
@@ -24,33 +41,47 @@ log.setup({
     },
   },
 });
-
-type EnvVars = {
-  SRTRELAY_URL: string;
-  PRIVATE_KEY: string;
-};
 const env = dotenv.loadSync({ export: true }) as EnvVars;
-
 const botPubkey = getPublicKey(env.PRIVATE_KEY);
 
-const rxNostr = createRxNostr();
-await rxNostr.switchRelays([env.SRTRELAY_URL]);
+const rxnSrtrelayOnly = createRxNostr();
+const rxnWriteRelays = createRxNostr();
 
+await rxnSrtrelayOnly.switchRelays([env.SRTRELAY_URL]);
+await rxnWriteRelays.switchRelays(
+  [env.SRTRELAY_URL, ...writeRelays].map((url) => ({
+    url,
+    read: false,
+    write: true,
+  }))
+);
+
+// main logic: subscribe to posts on srtrelay and react to them
 const req = createRxForwardReq();
-
-rxNostr
+rxnSrtrelayOnly
   .use(req)
   .pipe(
     verify(),
     uniq(),
-    filter(
-      ({ event }) => event.pubkey !== botPubkey && event.content.startsWith("!")
-    )
+    filter(({ event }) => event.pubkey !== botPubkey)
   )
   .subscribe(async ({ event }) => {
+    if (event.content.startsWith("!")) {
+      // handle commands
     const res = await handleCommand(event);
     for (const e of res) {
-      rxNostr.send(e, { seckey: env.PRIVATE_KEY });
+        rxnSrtrelayOnly.send(e, { seckey: env.PRIVATE_KEY });
+      }
+    } else {
+      // send reactions to shiritori-connected posts
+      rxnWriteRelays.send({
+        kind: 7,
+        content: "❗",
+        tags: [
+          ["e", event.id, ""],
+          ["p", event.pubkey, ""],
+        ],
+      });
     }
   });
 req.emit({ kinds: [1], limit: 0 });
@@ -59,7 +90,7 @@ req.emit({ kinds: [1], limit: 0 });
 launchCmdChecker();
 
 // notify launched
-rxNostr.send(
+rxnSrtrelayOnly.send(
   {
     kind: 1,
     content: "!(ง๑ •̀_•́)ง",
