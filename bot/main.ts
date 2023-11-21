@@ -76,14 +76,17 @@ rxnSrtrelayOnly
       }
     } else {
       // send reactions to shiritori-connected posts
-      rxnWriteRelays.send({
-        kind: 7,
-        content: "❗",
-        tags: [
-          ["e", event.id, ""],
-          ["p", event.pubkey, ""],
-        ],
-      });
+      rxnWriteRelays.send(
+        {
+          kind: 7,
+          content: "❗",
+          tags: [
+            ["e", event.id, ""],
+            ["p", event.pubkey, ""],
+          ],
+        },
+        { seckey: env.PRIVATE_KEY }
+      );
     }
   });
 req.emit({ kinds: [1], limit: 0 });
