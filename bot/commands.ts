@@ -1,10 +1,6 @@
-import * as log from "https://deno.land/std@0.207.0/log/mod.ts";
-import { join } from "https://deno.land/std@0.207.0/path/mod.ts";
-import { type EventPacket } from "npm:rx-nostr@1.8.1";
-
-type NostrEvent = EventPacket["event"];
-type NostrEventRaw = Omit<NostrEvent, "sig" | "id" | "pubkey">;
-type NostrEventPre = Omit<NostrEventRaw, "created_at">;
+import * as log from "std/log";
+import { join } from "std/path";
+import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
 
 type CommandDef = {
   key: string;
@@ -119,7 +115,7 @@ export const matchCommand = (
 
 export const handleCommand = async (
   cmdEv: NostrEvent
-): Promise<NostrEventRaw[]> => {
+): Promise<NostrEventUnsigned[]> => {
   const cmdMatch = matchCommand(cmdEv.content);
   if (cmdMatch === undefined) {
     return [];

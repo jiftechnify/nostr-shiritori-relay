@@ -1,0 +1,67 @@
+{
+  "profile": {
+    "name": "srtr_ritrin",
+    "display_name": "りとりん",
+    "about": "しりとリレーの番人(bot)。\n・「!」からはじまるコマンドに応答します (例: 「!next」 → 次の投稿をどの文字からはじめればいいか答える)\n・しりとリが繋がった投稿にリアクション❗します\n\nリレーURL: wss://srtrelay.c-stellar.net\nのぞき窓: https://srtrelay.c-stellar.net\n\n管理者: かすてらふぃ(NIP-05: jiftechnify@c-stellar.net)\nイラスト: たーごいる(NIP-05: _@targoyle.jp)",
+    "picture": "https://pubimgs.c-stellar.net/ritrin1_s.webp",
+    "banner": "https://pubimgs.c-stellar.net/ritrin2_banner_s.webp",
+    "website": "https://srtrelay.c-stellar.net",
+    "nip05": "ritrin@c-stellar.net"
+  },
+  "follows": [
+    "d1d1747115d16751a97c239f46ec1703292c3b7e9988b9ebdd4ec4705b15ed44"
+  ],
+  "relays": [
+    {
+      "url": "wss://srtrelay.c-stellar.net",
+      "read": true,
+      "write": true
+    },
+    {
+      "url": "wss://relay-jp.nostr.wirednet.jp",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://nostr.holybea.com",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://nrelay-jp.c-stellar.net",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://r.kojira.io",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://relay-jp.shino3.net",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://nostr-relay.nokotaro.com",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://relay.nostr.wirednet.jp",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://nos.lol",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://relay.damus.io",
+      "read": false,
+      "write": true
+    }
+  ]
+}
+
