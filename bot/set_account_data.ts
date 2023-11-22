@@ -1,17 +1,8 @@
 import * as dotenv from "std/dotenv";
 import rawAccountData from "./account_data.json" assert { type: "json" };
-import { EnvVars } from "./types.ts";
+import { AccountData, EnvVars } from "./types.ts";
 import { currUnixtime, publishToRelays } from "./utils.ts";
 
-type AccountData = {
-  profile: Record<string, string>;
-  follows: string[];
-  relays: {
-    url: string;
-    read: boolean;
-    write: boolean;
-  }[];
-};
 const acctData: AccountData = rawAccountData;
 
 const relayListTags = acctData.relays.reduce((a, r) => {
