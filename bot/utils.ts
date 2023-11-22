@@ -10,18 +10,17 @@ export const publishToRelays = async (
   privateKey: string,
   timeoutSec = 5
 ): Promise<void> => {
-  let cancelTimeout: () => void | undefined;
+  let canceled = false;
   const timeout = (rurl: string) =>
     new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
+      setTimeout(() => {
+        if (canceled) {
+          resolve();
+          return;
+        }
         console.log(`[${rurl}] publish timed out`);
         reject("timed out");
       }, timeoutSec * 1000);
-
-      cancelTimeout = () => {
-        clearTimeout(timeout);
-        resolve();
-      };
     });
 
   const pub = async (rurl: string, signed: NostrEvent) => {
@@ -31,12 +30,13 @@ export const publishToRelays = async (
       .publish(signed)
       .then(() => console.log(`[${rurl}] ok`))
       .catch((e) => console.log(`[${rurl}] failed: ${e}`));
+    canceled = true;
     r.close();
-    cancelTimeout?.();
   };
 
   const signed = finishEvent(ev, privateKey);
-  await Promise.all(
+
+  await Promise.allSettled(
     relayUrls.map((rurl) => Promise.race([pub(rurl, signed), timeout(rurl)]))
   );
 };
