@@ -1,0 +1,15 @@
+{
+  "imports": {
+    "std/dotenv": "https://deno.land/std@0.207.0/dotenv/mod.ts",
+    "std/log": "https://deno.land/std@0.207.0/log/mod.ts",
+    "std/path": "https://deno.land/std@0.207.0/path/mod.ts",
+    "rx-nostr": "npm:rx-nostr@1.8.1",
+    "rxjs": "npm:rxjs@7.8.1",
+    "nostr-tools/event": "npm:nostr-tools@1.17.0/event",
+    "nostr-tools/relay": "npm:nostr-tools@1.17.0/relay"
+  },
+  "tasks": {
+    "start": "deno run -A --unstable main.ts",
+    "set-data": "deno run -A set_account_data.ts"
+  }
+}
