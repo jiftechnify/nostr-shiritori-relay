@@ -1,5 +1,6 @@
 import { finishEvent } from "nostr-tools/event";
 import { relayInit } from "nostr-tools/relay";
+import * as log from 'std/log';
 import { NostrEvent, NostrEventUnsigned } from "./types.ts";
 
 export const currUnixtime = (): number => Math.floor(Date.now() / 1000);
@@ -18,7 +19,7 @@ export const publishToRelays = async (
           resolve();
           return;
         }
-        console.log(`[${rurl}] publish timed out`);
+        log.error(`[${rurl}] publish timed out`);
         reject("timed out");
       }, timeoutSec * 1000);
     });
@@ -28,14 +29,15 @@ export const publishToRelays = async (
     await r.connect();
     await r
       .publish(signed)
-      .then(() => console.log(`[${rurl}] ok`))
-      .catch((e) => console.log(`[${rurl}] failed: ${e}`));
+      .then(() => log.debug(`[${rurl}] ok`))
+      .catch((e) => log.error(`[${rurl}] failed: ${e}`));
     canceled = true;
     r.close();
   };
 
   const signed = finishEvent(ev, privateKey);
 
+  log.info(`publishing event to ${relayUrls.length} relays...`);
   await Promise.allSettled(
     relayUrls.map((rurl) => Promise.race([pub(rurl, signed), timeout(rurl)]))
   );
