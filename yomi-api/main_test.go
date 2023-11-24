@@ -2,25 +2,24 @@ package main
 
 import (
 	"log"
-	"os"
 	"testing"
 )
 
-func TestMain(m *testing.M) {
+func TestNormalizeText(t *testing.T) {
 	if err := initialize(); err != nil {
 		log.Fatal(err)
 	}
-	os.Exit(m.Run())
-}
 
-func TestNormalizeText(t *testing.T) {
 	tests := []struct {
 		in   string
 		want string
 	}{
 		{in: "あいうえお", want: "あいうえお"},
 		{in: "hoge　fuga\npiyo", want: "hoge fuga piyo"},
+		{in: "URLはhttps://hoge.com/fuga.pngです!", want: "URLは です!"},
+		{in: "To:nostr:npub168ghgug469n4r2tuyw05dmqhqv5jcwm7nxytn67afmz8qkc4a4zqsu2dlcこんにちは", want: "To: こんにちは"},
 		{in: "わよ:wayo:", want: "わよ "},
+		{in: "I'd like to", want: "アイド like to"},
 		{in: "Japan confirmed punk.", want: "Japan confirmed punk"},
 	}
 
@@ -87,6 +86,10 @@ func TestNormalizeKanaAt(t *testing.T) {
 }
 
 func TestEffectiveHeadAndList(t *testing.T) {
+	if err := initialize(); err != nil {
+		log.Fatal(err)
+	}
+
 	tests := []struct {
 		in      string
 		wantErr bool

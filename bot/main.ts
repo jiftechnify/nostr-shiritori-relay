@@ -19,7 +19,7 @@ if (import.meta.main) {
     handlers: {
       console: new log.handlers.ConsoleHandler("DEBUG", {
         formatter: ({ levelName, datetime, msg }) => {
-          return `${datetime.toLocaleString()} [${levelName.padEnd(5)}] ${msg}`;
+          return `${datetime.toLocaleString()} [${levelName.padEnd(8)}] ${msg}`;
         },
       }),
     },
@@ -96,7 +96,7 @@ if (import.meta.main) {
       log.warning("reconnecting to srtrelay");
       rxn.reconnect(env.SRTRELAY_URL);
     }
-  }, 10000);
+  }, 5000);
 
   // launch command checker used by sifter
   launchCmdChecker();

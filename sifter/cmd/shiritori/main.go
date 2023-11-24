@@ -138,7 +138,7 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 		prevLast := []rune(s)[0]
 
 		if !isShiritoriConnected(prevLast, hl.Head) {
-			log.Printf("❌Rejected! content: %s, head: %c, last: %c", input.Event.Content, hl.Head, hl.Last)
+			log.Printf("❌Rejected! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
 			return input.Reject("blocked: shiritori not connected")
 		}
 	}
@@ -146,7 +146,7 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 	if err := saveLastKana(f, hl.Last); err != nil {
 		return nil, err
 	}
-	log.Printf("✅Accepted! content: %s, head: %c, last: %c", input.Event.Content, hl.Head, hl.Last)
+	log.Printf("✅Accepted! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
 	return input.Accept()
 }
 
