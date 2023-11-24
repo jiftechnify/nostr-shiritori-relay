@@ -64,8 +64,8 @@ func parseReplaceDict(path string) error {
 		if len(split) < 2 {
 			continue
 		}
-		re := regexp.MustCompile(fmt.Sprintf("\b(?i:%s)\b", split[0]))
-		replaceDict[re] = split[1]
+		re := regexp.MustCompile(fmt.Sprintf(`\b(?i:%s)\b`, split[0]))
+		replaceDict[re] = naturalizeEnWordReading(split[1])
 	}
 	return nil
 }
@@ -353,14 +353,16 @@ func normalizeKanaAt(rs []rune, i int) rune {
 
 var (
 	regexpSpaces      = regexp.MustCompile(`[\f\t\v\r\n\p{Zs}\x{85}\x{feff}\x{2028}\x{2029}]`)
-	regexpCustomEmoji = regexp.MustCompile(`:[a-zA-Z0-9_]+:`)
+	regexpHTTPURI     = regexp.MustCompile(`(https?|wss?)://[[:graph:]]+`)
+	regexpNostrID     = regexp.MustCompile(`(nostr:)?n(pub|sec|profile|event|ote|addr|relay)1[[:alnum:]]+`)
+	regexpCustomEmoji = regexp.MustCompile(`:[[:word:]]+:`)
 )
 
 // normalize the string for determining reading.
 //
 // normalization proecss includes:
 //   - normalizing various space charcters to the "normal" space
-//   - removing custom emoji shortcode (e.g. ":foo:")
+//   - removing http/ws URIs, Nostr IDs (`nxxx1...` things, including `nostr:` prefix) and custom emoji shortcodes (e.g. ":foo:")
 //   - trimming trailing period
 //   - replacing words in replace dictionary
 //
@@ -368,6 +370,8 @@ var (
 // replacing words is necessary because kagome tokenizer tokenizes words that have "'" in wrong way.
 func normalizeText(s string) string {
 	res := regexpSpaces.ReplaceAllString(s, " ")
+	res = regexpHTTPURI.ReplaceAllString(res, " ")
+	res = regexpNostrID.ReplaceAllString(res, " ")
 	res = regexpCustomEmoji.ReplaceAllString(res, " ")
 	res = strings.TrimRight(res, ".")
 	for re, repl := range replaceDict {
