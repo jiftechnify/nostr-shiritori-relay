@@ -39,6 +39,20 @@ if (import.meta.main) {
   const rxn = createRxNostr();
   await rxn.switchRelays([env.SRTRELAY_URL]);
 
+  // force reconnect if no post received for 10 minutes
+  let forceReconnectTimer: number | undefined;
+  const scheduleForceReconnect = () => {
+    if (forceReconnectTimer !== undefined) {
+      clearTimeout(forceReconnectTimer);
+    }
+    forceReconnectTimer = setTimeout(async () => {
+      log.warning("force reconnect to srtrelay");
+      await rxn.removeRelay(env.SRTRELAY_URL);
+      await rxn.addRelay(env.SRTRELAY_URL);
+      scheduleForceReconnect();
+    }, 10 * 60 * 1000);
+  }
+
   // main logic: subscribe to posts on srtrelay and react to them
   const req = createRxForwardReq();
   rxn
@@ -68,10 +82,13 @@ if (import.meta.main) {
         };
         await publishToRelays(writeRelays, k7, env.PRIVATE_KEY);
       }
+
+      // schedule force reconnect every time post received
+      scheduleForceReconnect();
     });
   req.emit({ kinds: [1], limit: 0 });
 
-  // monitor relay connection state and reconenct on error
+  // monitor relay connection state
   const onConnStateChange = ({ from, state }: ConnectionStatePacket) => {
     switch (state) {
       case "ongoing":
@@ -91,12 +108,15 @@ if (import.meta.main) {
   };
   rxn.createConnectionStateObservable().subscribe(onConnStateChange);
 
+  // reconnect on error
   setInterval(() => {
     if (["error", "rejected"].includes(rxn.getRelayState(env.SRTRELAY_URL))) {
       log.warning("reconnecting to srtrelay");
       rxn.reconnect(env.SRTRELAY_URL);
     }
   }, 5000);
+  // schedule force reconnect for the first time
+  scheduleForceReconnect();
 
   // launch command checker used by sifter
   launchCmdChecker();
