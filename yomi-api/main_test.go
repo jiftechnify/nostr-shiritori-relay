@@ -20,6 +20,7 @@ func TestNormalizeText(t *testing.T) {
 		{in: "To:nostr:npub168ghgug469n4r2tuyw05dmqhqv5jcwm7nxytn67afmz8qkc4a4zqsu2dlcこんにちは", want: "To: こんにちは"},
 		{in: "わよ:wayo:", want: "わよ "},
 		{in: "I'd like to", want: "アイド like to"},
+		{in: "-1,234.56", want: "マイナスセンニヒャクサンジュウヨンテンゴロク"},
 		{in: "Japan confirmed punk.", want: "Japan confirmed punk"},
 	}
 
@@ -115,6 +116,8 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		{in: "Japan confirmed punk.", wantErr: false, head: 'ジ', last: 'ク'},
 		{in: "Let's go at 9 o'clock!", wantErr: false, head: 'レ', last: 'ク'},
 		{in: "mix English and 日本語", wantErr: false, head: 'ミ', last: 'ゴ'},
+		{in: "kind 30078", wantErr: false, head: 'カ', last: 'チ'},
+		{in: "-5ポイント", wantErr: false, head: 'マ', last: 'ト'},
 		{in: "🍕", wantErr: false, head: 'ピ', last: 'ザ'},
 		{in: "！？", wantErr: true, head: 0, last: 0},
 	}
