@@ -83,7 +83,31 @@ func main() {
 	r.Run()
 }
 
+type fakableClock struct {
+	fakedNow time.Time
+}
+
+func (c fakableClock) Now() time.Time {
+	if !c.fakedNow.IsZero() {
+		return c.fakedNow
+	}
+	return time.Now()
+}
+
+func (c *fakableClock) SetFake(t time.Time) {
+	c.fakedNow = t
+}
+
+var clock = &fakableClock{}
+
 func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
+	// reject events that don't have created_at within 1 minute of window from now
+	now := clock.Now()
+	createdAt := input.Event.CreatedAt.Time()
+	if createdAt.Before(now.Add(-1*time.Minute)) || createdAt.After(now.Add(1*time.Minute)) {
+		return input.ShadowReject()
+	}
+
 	if _, ok := nonRestrictedKinds[input.Event.Kind]; ok {
 		return input.Accept()
 	}
