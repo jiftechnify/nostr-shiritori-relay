@@ -356,6 +356,7 @@ var (
 	regexpHTTPURI     = regexp.MustCompile(`(https?|wss?)://[[:graph:]]+`)
 	regexpNostrID     = regexp.MustCompile(`(nostr:)?n(pub|sec|profile|event|ote|addr|relay)1[[:alnum:]]+`)
 	regexpCustomEmoji = regexp.MustCompile(`:[[:word:]]+:`)
+	regexpNumber      = regexp.MustCompile(`-?[[:digit:],_.]+`)
 )
 
 // normalize the string for determining reading.
@@ -363,6 +364,7 @@ var (
 // normalization proecss includes:
 //   - normalizing various space charcters to the "normal" space
 //   - removing http/ws URIs, Nostr IDs (`nxxx1...` things, including `nostr:` prefix) and custom emoji shortcodes (e.g. ":foo:")
+//   - replacing numbers (sequences of digits) with their readings
 //   - trimming trailing period
 //   - replacing words in replace dictionary
 //
@@ -373,7 +375,17 @@ func normalizeText(s string) string {
 	res = regexpHTTPURI.ReplaceAllString(res, " ")
 	res = regexpNostrID.ReplaceAllString(res, " ")
 	res = regexpCustomEmoji.ReplaceAllString(res, " ")
+	res = regexpNumber.ReplaceAllStringFunc(res, func(s string) string {
+		cut, isNeg := strings.CutPrefix(s, "-")
+		numReading := getNumberReading(strings.NewReplacer(",", "", "_", "").Replace(cut))
+		if isNeg {
+			return "マイナス" + numReading
+		} else {
+			return numReading
+		}
+	})
 	res = strings.TrimRight(res, ".")
+
 	for re, repl := range replaceDict {
 		res = re.ReplaceAllString(res, repl)
 	}
@@ -411,23 +423,23 @@ var (
 )
 
 func headKanaOfToken(t tokenizer.Token) rune {
-	// 1. get head kana from reading of the token
+	// get head kana from reading of the token
 	if r, ok := t.Reading(); ok {
 		if k := headKana(r); k != 0 {
 			return k
 		}
 	}
 
-	// 2. if the token is likely English word...
+	// if the token is likely an English word...
 	if regexpAllEnAlphabet.MatchString(t.Surface) {
-		// 2-1. get reading from dictionary and get head kana
+		// first, get reading from dictionary and get head kana
 		upper := strings.ToUpper(t.Surface)
 		if r, ok := getEnWordReading(upper); ok {
 			if k := headKana(r); k != 0 {
 				return k
 			}
 		}
-		// 2-2. if reading is not available, use literal reading of first alphabet
+		// if reading is not available, use literal reading of first alphabet
 		if r, ok := enAlphabetReadings[rune(upper[0])]; ok {
 			if k := headKana(r); k != 0 {
 				return k
@@ -436,12 +448,12 @@ func headKanaOfToken(t tokenizer.Token) rune {
 		return 0
 	}
 
-	// 3. if the token consists of only halfwidth katakana, get head and convert it to fullwidth
+	// if the token consists of only halfwidth katakana, get head and convert it to fullwidth
 	if regexpAllHwKana.MatchString(t.Surface) {
 		return normalizeKanaAt([]rune(t.Surface), 0)
 	}
 
-	// 4. get head kana from surface form of the token
+	// get head kana from surface form of the token
 	if k := headKana(t.Surface); k != 0 {
 		return normalizeSingleKana(k)
 	}
@@ -459,23 +471,23 @@ func headKana(r string) rune {
 }
 
 func lastKanaOfToken(t tokenizer.Token) rune {
-	// 1. get last kana from reading of the token
+	// get last kana from reading of the token
 	if r, ok := t.Reading(); ok {
 		if k := lastKana(r); k != 0 {
 			return k
 		}
 	}
 
-	// 2. if the token is likely English word...
+	// if the token is likely an English word...
 	if regexpAllEnAlphabet.MatchString(t.Surface) {
-		// 2-1. get reading from dictionary and get last kana
+		// first, get reading from dictionary and get last kana
 		upper := strings.ToUpper(t.Surface)
 		if r, ok := getEnWordReading(upper); ok {
 			if k := lastKana(r); k != 0 {
 				return k
 			}
 		}
-		// 2-2. if reading is not available, use literal reading of last alphabet
+		// if reading is not available, use literal reading of last alphabet
 		if r, ok := enAlphabetReadings[rune(upper[len(upper)-1])]; ok {
 			if k := lastKana(r); k != 0 {
 				return k
@@ -484,7 +496,7 @@ func lastKanaOfToken(t tokenizer.Token) rune {
 		return 0
 	}
 
-	// 3. if the token consists of only halfwidth katakana, get last and convert it to fullwidth
+	// if the token consists of only halfwidth katakana, get last and convert it to fullwidth
 	if regexpAllHwKana.MatchString(t.Surface) {
 		rs := []rune(t.Surface)
 		l := len(rs) - 1
@@ -499,7 +511,7 @@ func lastKanaOfToken(t tokenizer.Token) rune {
 		return normalizeKanaAt(rs, l)
 	}
 
-	// 4. get last kana from surface form of the token
+	// get last kana from surface form of the token
 	if k := lastKana(t.Surface); k != 0 {
 		return normalizeSingleKana(k)
 	}
