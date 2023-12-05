@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	evsifter "github.com/jiftechnify/strfry-evsifter"
+	"github.com/jiftechnify/strfrui"
 	"github.com/nbd-wtf/go-nostr"
 )
 
@@ -35,32 +35,32 @@ func TestShiritoriSifter_basic(t *testing.T) {
 
 	tests := []struct {
 		ev   *nostr.Event
-		want evsifter.Action
+		want strfrui.Action
 	}{
 		{
 			ev:   testEvent(func(ev *nostr.Event) { ev.CreatedAt = nostrTS(clock.Now().Add(time.Hour)) }),
-			want: evsifter.ActionShadowReject,
+			want: strfrui.ActionShadowReject,
 		},
 		{
 			ev:   testEvent(func(ev *nostr.Event) { ev.CreatedAt = nostrTS(clock.Now().Add(-time.Hour)) }),
-			want: evsifter.ActionShadowReject,
+			want: strfrui.ActionShadowReject,
 		},
 		{
 			ev:   testEvent(func(ev *nostr.Event) { ev.Kind = nostr.KindReaction }),
-			want: evsifter.ActionAccept,
+			want: strfrui.ActionAccept,
 		},
 		{
 			ev:   testEvent(func(ev *nostr.Event) { ev.Kind = nostr.KindSetMetadata }),
-			want: evsifter.ActionShadowReject,
+			want: strfrui.ActionShadowReject,
 		},
 		{
 			ev:   testEvent(func(ev *nostr.Event) { ev.Tags = []nostr.Tag{{"e", "", ""}} }),
-			want: evsifter.ActionShadowReject,
+			want: strfrui.ActionShadowReject,
 		},
 	}
 
 	for _, tt := range tests {
-		input := &evsifter.Input{
+		input := &strfrui.Input{
 			Event: tt.ev,
 		}
 		result, err := shiritoriSifter(input)

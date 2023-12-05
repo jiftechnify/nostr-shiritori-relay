@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	evsifter "github.com/jiftechnify/strfry-evsifter"
+	"github.com/jiftechnify/strfrui"
 	"github.com/nbd-wtf/go-nostr"
 )
 
@@ -28,6 +28,7 @@ var (
 
 var (
 	nonRestrictedPubkeys = make(map[string]struct{})
+	blockedPubkeys       = make(map[string]struct{})
 )
 
 var (
@@ -35,12 +36,10 @@ var (
 	regexpHexPubkey = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
 
-func readNonRestrictedPubkeys() error {
-	f, err := os.Open(filepath.Join(resourceDirPath, "non_restricted_pubkeys.txt"))
+func readPubkeyListFile(path string, m map[string]struct{}) error {
+	f, err := os.Open(path)
 	if err != nil {
-		log.Printf("failed to open file of non-restricted pubkeys list: %v", err)
-		log.Print("assuming all pubkeys are restricted")
-		return nil
+		return err
 	}
 	defer f.Close()
 
@@ -48,9 +47,9 @@ func readNonRestrictedPubkeys() error {
 	for scanner.Scan() {
 		pk := scanner.Text()
 		if !regexpHexPubkey.MatchString(pk) {
-			return fmt.Errorf("malformed pubkey in non-restricted pubkeys list: %s", pk)
+			return fmt.Errorf("malformed pubkey in pubkey list: %s", pk)
 		}
-		nonRestrictedPubkeys[scanner.Text()] = struct{}{}
+		m[pk] = struct{}{}
 	}
 	return nil
 }
@@ -66,8 +65,11 @@ func initialize() error {
 		return errors.New("YOMI_API_BASE_URL is not set in .env")
 	}
 
-	// load non-restricted pubkeys list
-	if err := readNonRestrictedPubkeys(); err != nil {
+	// load pubkey list
+	if err := readPubkeyListFile(filepath.Join(resourceDirPath, "non_restricted_pubkeys.txt"), nonRestrictedPubkeys); err != nil {
+		return err
+	}
+	if err := readPubkeyListFile(filepath.Join(resourceDirPath, "blocked_pubkeys.txt"), blockedPubkeys); err != nil {
 		return err
 	}
 	return nil
@@ -78,9 +80,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	var r evsifter.Runner
-	r.SiftWithFunc(shiritoriSifter)
-	r.Run()
+	strfrui.NewWithSifterFunc(shiritoriSifter).Run()
 }
 
 type fakableClock struct {
@@ -100,7 +100,7 @@ func (c *fakableClock) SetFake(t time.Time) {
 
 var clock = &fakableClock{}
 
-func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
+func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 	// reject events that don't have created_at within 1 minute of window from now
 	now := clock.Now()
 	createdAt := input.Event.CreatedAt.Time()
@@ -111,6 +111,7 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 	if _, ok := nonRestrictedKinds[input.Event.Kind]; ok {
 		return input.Accept()
 	}
+
 	if input.Event.Kind != nostr.KindTextNote {
 		return input.ShadowReject()
 	}
@@ -119,6 +120,10 @@ func shiritoriSifter(input *evsifter.Input) (*evsifter.Result, error) {
 	if _, ok := nonRestrictedPubkeys[input.Event.PubKey]; ok {
 		log.Printf("accepting note from non-restricted pubkey: %s", input.Event.Content)
 		return input.Accept()
+	}
+	// reject notes from blocked pubkeys
+	if _, ok := blockedPubkeys[input.Event.PubKey]; ok {
+		return input.ShadowReject()
 	}
 
 	// reject replies
