@@ -107,6 +107,8 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		{in: "ｳﾞｧｯ", wantErr: false, head: 'ヴ', last: 'ッ'},
 		{in: "ｳｶﾞﾝﾀﾞ", wantErr: false, head: 'ウ', last: 'ダ'},
 		{in: "ｳﾜｰ!", wantErr: false, head: 'ウ', last: 'ワ'},
+		{in: "ｰｨｽ", wantErr: false, head: 'ィ', last: 'ス'},
+		{in: "ｰｶﾞｷﾞ", wantErr: false, head: 'ガ', last: 'ギ'},
 		{in: "漢字", wantErr: false, head: 'カ', last: 'ジ'},
 		{in: "カナと漢字が混ざった文", wantErr: false, head: 'カ', last: 'ン'},
 		{in: "ｶﾅと漢字が混ざった文", wantErr: false, head: 'カ', last: 'ン'},

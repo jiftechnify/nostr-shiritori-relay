@@ -450,7 +450,17 @@ func headKanaOfToken(t tokenizer.Token) rune {
 
 	// if the token consists of only halfwidth katakana, get head and convert it to fullwidth
 	if regexpAllHwKana.MatchString(t.Surface) {
-		return normalizeKanaAt([]rune(t.Surface), 0)
+		rs := []rune(t.Surface)
+		h := 0
+		for ; h < len(rs); h++ {
+			if isKana(rs[h]) {
+				break
+			}
+		}
+		if h >= len(rs) {
+			return 0
+		}
+		return normalizeKanaAt(rs, h)
 	}
 
 	// get head kana from surface form of the token
