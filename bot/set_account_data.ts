@@ -1,7 +1,7 @@
 import * as dotenv from "std/dotenv";
 import rawAccountData from "./account_data.json" assert { type: "json" };
 import { AccountData, EnvVars } from "./types.ts";
-import { currUnixtime, publishToRelays } from "./utils.ts";
+import { currUnixtime, publishToRelays } from "./common.ts";
 
 const acctData: AccountData = rawAccountData;
 

@@ -7,6 +7,7 @@ export type NostrEventPre = Omit<NostrEventUnsigned, "created_at">;
 export type EnvVars = {
   SRTRELAY_URL: string;
   PRIVATE_KEY: string;
+  RESOURCE_DIR: string;
 };
 
 export type RelayUsage = {

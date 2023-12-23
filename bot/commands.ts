@@ -1,5 +1,6 @@
 import * as log from "std/log";
 import { join } from "std/path";
+import { getNextKana } from "./common.ts";
 import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
 
 type CommandDef = {
@@ -34,14 +35,6 @@ const helpText = `「!」からはじまる投稿がコマンドとして扱わ�
 - ping,生きてる?: botが生きているか確認します。
 - help,ヘルプ: このヘルプを表示します。
 `;
-
-const getNextKana = (): Promise<string> => {
-  const resouceDir = Deno.env.get("RESOURCE_DIR");
-  if (resouceDir === undefined) {
-    throw new Error("RESOURCE_DIR is not defined");
-  }
-  return Deno.readTextFile(join(resouceDir, "last_kana.txt"));
-};
 
 const commands: CommandDef[] = [
   {

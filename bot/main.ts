@@ -11,8 +11,9 @@ import * as dotenv from "std/dotenv";
 import * as log from "std/log";
 import rawAccountData from "./account_data.json" assert { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
+import { currUnixtime, publishToRelays } from "./common.ts";
+import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData, EnvVars } from "./types.ts";
-import { currUnixtime, publishToRelays } from "./utils.ts";
 
 if (import.meta.main) {
   log.setup({
@@ -118,8 +119,9 @@ if (import.meta.main) {
   // schedule force reconnect for the first time
   scheduleForceReconnect();
 
-  // launch command checker used by sifter
+  // launch subsystems
   launchCmdChecker();
+  launchStatusUpdater(env, writeRelays);
 
   // notify launched
   await publishToRelays(
