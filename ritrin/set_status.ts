@@ -6,17 +6,17 @@ import {
   getNextKana,
   publishToRelays,
 } from "./common.ts";
-import { EnvVars } from "./types.ts";
+import { EnvVars } from "./env.ts";
 
 const updateStatusOnNextKanaChange = (env: EnvVars, writeRelays: string[]) =>
   debounce(async () => {
-    const nextKana = await getNextKana();
+    const nextKana = await getNextKana(env);
     const k30315 = {
       kind: 30315,
       content: `次は「${nextKana}」から！`,
       tags: [
         ["d", "general"],
-        ["r", env.SRTRELAY_URL.replace("wss", "https")],
+        ["r", env.NOZOKIMADO_URL],
       ],
       created_at: currUnixtime(),
     };

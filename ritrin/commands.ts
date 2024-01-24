@@ -1,6 +1,7 @@
 import * as log from "std/log";
 import { join } from "std/path";
 import { getNextKana } from "./common.ts";
+import { EnvVars } from "./env.ts";
 import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
 
 type CommandDef = {
@@ -9,7 +10,8 @@ type CommandDef = {
   allowTrailingQuestions: boolean;
   handle: (
     event: NostrEvent,
-    matches: RegExpMatchArray
+    env: EnvVars,
+    matches: RegExpMatchArray,
   ) => NostrEventPre[] | Promise<NostrEventPre[]>;
 };
 
@@ -41,8 +43,8 @@ const commands: CommandDef[] = [
     key: "next",
     trigger: /^next|(次|つぎ)は?((何|なに)(から)?)?$/i,
     allowTrailingQuestions: true,
-    handle: async (event) => {
-      const next = await getNextKana();
+    handle: async (event, env) => {
+      const next = await getNextKana(env);
       return [silentMention(event, `次は「${next}」から！`)];
     },
   },
@@ -50,13 +52,9 @@ const commands: CommandDef[] = [
     key: "ping",
     trigger: /^ping|(生|い)き(て|と)る\?$/i,
     allowTrailingQuestions: false,
-    handle: async (event, matches) => {
+    handle: async (event, env, matches) => {
       try {
-        const apiBaseUrl = Deno.env.get("YOMI_API_BASE_URL");
-        if (apiBaseUrl === undefined) {
-          throw new Error("YOMI_API_BASE_URL is not defined");
-        }
-        const apiHealthResp = await fetch(`${apiBaseUrl}/health`, {
+        const apiHealthResp = await fetch(`${env.YOMI_API_BASE_URL}/health`, {
           signal: AbortSignal.timeout(5000),
         });
         if (!apiHealthResp.ok) {
@@ -107,7 +105,8 @@ export const matchCommand = (
 };
 
 export const handleCommand = async (
-  cmdEv: NostrEvent
+  cmdEv: NostrEvent,
+  env: EnvVars
 ): Promise<NostrEventUnsigned[]> => {
   const cmdMatch = matchCommand(cmdEv.content);
   if (cmdMatch === undefined) {
@@ -116,7 +115,7 @@ export const handleCommand = async (
   const { cmdDef, matches } = cmdMatch;
 
   try {
-    const res = await cmdDef.handle(cmdEv, matches);
+    const res = await cmdDef.handle(cmdEv, env, matches,);
     return res.map((e, i) => ({
       ...e,
       created_at: cmdEv.created_at + 1 + i,
@@ -134,15 +133,9 @@ export const handleCommand = async (
   }
 };
 
-export const launchCmdChecker = () => {
+export const launchCmdChecker = (env: EnvVars) => {
   const serve = async () => {
-    const resourceDir = Deno.env.get("RESOURCE_DIR");
-    if (resourceDir === undefined) {
-      log.error("RESOURCE_DIR is not defined");
-      Deno.exit(1);
-    }
-
-    const sockPath = join(resourceDir, "bot_cmd_check.sock");
+    const sockPath = join(env.RESOURCE_DIR, "bot_cmd_check.sock");
     try {
       Deno.removeSync(sockPath);
     } catch (err) {

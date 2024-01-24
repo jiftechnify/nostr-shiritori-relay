@@ -7,13 +7,13 @@ import {
   verify,
 } from "rx-nostr";
 import { filter } from "rxjs";
-import * as dotenv from "std/dotenv";
 import * as log from "std/log";
 import rawAccountData from "./account_data.json" assert { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
+import { parseEnvVars } from './env.ts';
 import { launchStatusUpdater } from "./set_status.ts";
-import { AccountData, EnvVars } from "./types.ts";
+import { AccountData } from "./types.ts";
 
 if (import.meta.main) {
   log.setup({
@@ -30,7 +30,8 @@ if (import.meta.main) {
       },
     },
   });
-  const env = dotenv.loadSync({ export: true }) as EnvVars;
+
+  const env = parseEnvVars();
   const botPubkey = getPublicKey(env.PRIVATE_KEY);
 
   const writeRelays = (rawAccountData as AccountData).relays
@@ -66,7 +67,7 @@ if (import.meta.main) {
     .subscribe(async ({ event }) => {
       if (event.content.startsWith("!")) {
         // handle commands
-        const res = await handleCommand(event);
+        const res = await handleCommand(event, env);
         for (const e of res) {
           rxn.send(e, { seckey: env.PRIVATE_KEY });
         }
@@ -120,7 +121,7 @@ if (import.meta.main) {
   scheduleForceReconnect();
 
   // launch subsystems
-  launchCmdChecker();
+  launchCmdChecker(env);
   launchStatusUpdater(env, writeRelays);
 
   // notify launched
