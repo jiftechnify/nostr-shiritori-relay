@@ -1,7 +1,7 @@
-import * as dotenv from "std/dotenv";
 import rawAccountData from "./account_data.json" assert { type: "json" };
-import { AccountData, EnvVars } from "./types.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
+import { parseEnvVars } from "./env.ts";
+import { AccountData } from "./types.ts";
 
 const acctData: AccountData = rawAccountData;
 
@@ -19,7 +19,7 @@ const relayListTags = acctData.relays.reduce((a, r) => {
 }, [] as string[][]);
 
 if (import.meta.main) {
-  const env = dotenv.loadSync({ export: true }) as EnvVars;
+  const env = parseEnvVars();
   const writeRelays = acctData.relays.filter((r) => r.write).map((r) => r.url);
 
   const k0 = {

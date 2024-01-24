@@ -7,7 +7,9 @@
     "rx-nostr": "npm:rx-nostr@1.8.1",
     "rxjs": "npm:rxjs@7.8.1",
     "nostr-tools/event": "npm:nostr-tools@1.17.0/event",
-    "nostr-tools/relay": "npm:nostr-tools@1.17.0/relay"
+    "nostr-tools/relay": "npm:nostr-tools@1.17.0/relay",
+    "nostr-tools/nip19": "npm:nostr-tools@1.17.0/nip19",
+    "envalid": "https://deno.land/x/envalid@0.1.2/mod.ts"
   },
   "tasks": {
     "start": "deno run -A --unstable main.ts",

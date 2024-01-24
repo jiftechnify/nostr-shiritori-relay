@@ -2,6 +2,7 @@ import { finishEvent } from "nostr-tools/event";
 import { relayInit } from "nostr-tools/relay";
 import * as log from 'std/log';
 import { join } from "std/path";
+import { EnvVars } from "./env.ts";
 import { NostrEvent, NostrEventUnsigned } from "./types.ts";
 
 export const currUnixtime = (): number => Math.floor(Date.now() / 1000);
@@ -46,10 +47,6 @@ export const publishToRelays = async (
 
 export const LAST_KANA_FILEPATH = "last_kana.txt";
 
-export const getNextKana = (): Promise<string> => {
-  const resouceDir = Deno.env.get("RESOURCE_DIR");
-  if (resouceDir === undefined) {
-    throw new Error("RESOURCE_DIR is not defined");
-  }
-  return Deno.readTextFile(join(resouceDir, LAST_KANA_FILEPATH));
+export const getNextKana = (env: EnvVars): Promise<string> => {
+  return Deno.readTextFile(join(env.RESOURCE_DIR, LAST_KANA_FILEPATH));
 };
