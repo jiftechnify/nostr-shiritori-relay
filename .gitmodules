@@ -1,0 +1,3 @@
+[submodule "nozokimado"]
+	path = nozokimado
+	url = git@github.com:jiftechnify/nostr-global-viewer.git
