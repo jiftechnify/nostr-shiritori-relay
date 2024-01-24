@@ -21,3 +21,10 @@ const envVarsSpec = {
 
 export const parseEnvVars = () => cleanEnv(Deno.env.toObject(), envVarsSpec);
 export type EnvVars = ReturnType<typeof parseEnvVars>;
+
+export const maskSecretsInEnvVars = (env: EnvVars): Record<string, unknown> => {
+  return {
+    ...env,
+    PRIVATE_KEY: "*******",
+  };
+}

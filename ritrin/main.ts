@@ -11,11 +11,11 @@ import * as log from "std/log";
 import rawAccountData from "./account_data.json" assert { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
-import { parseEnvVars } from './env.ts';
+import { maskSecretsInEnvVars, parseEnvVars } from "./env.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData } from "./types.ts";
 
-if (import.meta.main) {
+const main = async () => {
   log.setup({
     handlers: {
       console: new log.handlers.ConsoleHandler("DEBUG", {
@@ -32,6 +32,8 @@ if (import.meta.main) {
   });
 
   const env = parseEnvVars();
+  log.info("environment vars: %O", maskSecretsInEnvVars(env));
+
   const botPubkey = getPublicKey(env.PRIVATE_KEY);
 
   const writeRelays = (rawAccountData as AccountData).relays
@@ -53,7 +55,7 @@ if (import.meta.main) {
       await rxn.addRelay(env.SRTRELAY_URL);
       scheduleForceReconnect();
     }, 10 * 60 * 1000);
-  }
+  };
 
   // main logic: subscribe to posts on srtrelay and react to them
   const req = createRxForwardReq();
@@ -136,4 +138,13 @@ if (import.meta.main) {
     env.PRIVATE_KEY
   );
   log.info("Ritrin launched !(ง๑ •̀_•́)ง");
+};
+
+if (import.meta.main) {
+  try {
+    await main();
+  } catch (e) {
+    console.error(e);
+    Deno.exit(1);
+  }
 }
