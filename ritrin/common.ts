@@ -47,9 +47,9 @@ export const publishToRelays = async (
 export const LAST_KANA_FILEPATH = "last_kana.txt";
 
 export const getNextKana = (): Promise<string> => {
-  const resouceDir = Deno.env.get("RESOURCE_DIR");
-  if (resouceDir === undefined) {
+  const resourceDir = Deno.env.get("RESOURCE_DIR");
+  if (resourceDir === undefined) {
     throw new Error("RESOURCE_DIR is not defined");
   }
-  return Deno.readTextFile(join(resouceDir, LAST_KANA_FILEPATH));
+  return Deno.readTextFile(join(resourceDir, LAST_KANA_FILEPATH));
 };

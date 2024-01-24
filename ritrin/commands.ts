@@ -136,13 +136,13 @@ export const handleCommand = async (
 
 export const launchCmdChecker = () => {
   const serve = async () => {
-    const resouceDir = Deno.env.get("RESOURCE_DIR");
-    if (resouceDir === undefined) {
+    const resourceDir = Deno.env.get("RESOURCE_DIR");
+    if (resourceDir === undefined) {
       log.error("RESOURCE_DIR is not defined");
       Deno.exit(1);
     }
 
-    const sockPath = join(resouceDir, "bot_cmd_check.sock");
+    const sockPath = join(resourceDir, "bot_cmd_check.sock");
     try {
       Deno.removeSync(sockPath);
     } catch (err) {
