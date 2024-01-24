@@ -19,7 +19,7 @@ describe("parseEnvVars", () => {
   });
 
   it("parses env vars successfully", () => {
-    Deno.env.set("PRIVATE_KEY", TEST_PRIVATE_KEY.nsec);
+    Deno.env.set("RITRIN_PRIVATE_KEY", TEST_PRIVATE_KEY.nsec);
     Deno.env.set("RESOURCE_DIR", "/path/to/resource");
     Deno.env.set("SRTRELAY_URL", "https://srtrelay.example.com");
     Deno.env.set("YOMI_API_BASE_URL", "https://yomi.example.com");
@@ -27,7 +27,7 @@ describe("parseEnvVars", () => {
 
     const env = parseEnvVars();
 
-    assertEquals(env.PRIVATE_KEY, TEST_PRIVATE_KEY.hex); // make sure that nsec is converted to hex
+    assertEquals(env.RITRIN_PRIVATE_KEY, TEST_PRIVATE_KEY.hex); // make sure that nsec is converted to hex
     assertEquals(env.RESOURCE_DIR, "/path/to/resource");
     assertEquals(env.SRTRELAY_URL, "https://srtrelay.example.com");
     assertEquals(env.YOMI_API_BASE_URL, "https://yomi.example.com");

@@ -43,7 +43,7 @@ if (import.meta.main) {
 
   await Promise.allSettled(
     [k0, k3, k10002].map(async (ev) => {
-      await publishToRelays(writeRelays, ev, env.PRIVATE_KEY, 10);
+      await publishToRelays(writeRelays, ev, env.RITRIN_PRIVATE_KEY, 10);
     })
   );
 }

@@ -34,7 +34,7 @@ const main = async () => {
   const env = parseEnvVars();
   log.info("environment vars: %O", maskSecretsInEnvVars(env));
 
-  const botPubkey = getPublicKey(env.PRIVATE_KEY);
+  const botPubkey = getPublicKey(env.RITRIN_PRIVATE_KEY);
 
   const writeRelays = (rawAccountData as AccountData).relays
     .filter((r) => r.write)
@@ -71,7 +71,7 @@ const main = async () => {
         // handle commands
         const res = await handleCommand(event, env);
         for (const e of res) {
-          rxn.send(e, { seckey: env.PRIVATE_KEY });
+          rxn.send(e, { seckey: env.RITRIN_PRIVATE_KEY });
         }
       } else {
         // send reactions to shiritori-connected posts
@@ -84,7 +84,7 @@ const main = async () => {
           ],
           created_at: currUnixtime(),
         };
-        await publishToRelays(writeRelays, k7, env.PRIVATE_KEY);
+        await publishToRelays(writeRelays, k7, env.RITRIN_PRIVATE_KEY);
       }
 
       // schedule force reconnect every time post received
@@ -135,7 +135,7 @@ const main = async () => {
       tags: [],
       created_at: currUnixtime(),
     },
-    env.PRIVATE_KEY
+    env.RITRIN_PRIVATE_KEY
   );
   log.info("Ritrin launched !(ง๑ •̀_•́)ง");
 };

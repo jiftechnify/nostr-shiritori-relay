@@ -1,10 +1,10 @@
 import { debounce } from "std/async";
 import { basename } from "std/path";
 import {
-  LAST_KANA_FILEPATH,
-  currUnixtime,
-  getNextKana,
-  publishToRelays,
+    LAST_KANA_FILEPATH,
+    currUnixtime,
+    getNextKana,
+    publishToRelays,
 } from "./common.ts";
 import { EnvVars } from "./env.ts";
 
@@ -20,7 +20,7 @@ const updateStatusOnNextKanaChange = (env: EnvVars, writeRelays: string[]) =>
       ],
       created_at: currUnixtime(),
     };
-    await publishToRelays(writeRelays, k30315, env.PRIVATE_KEY);
+    await publishToRelays(writeRelays, k30315, env.RITRIN_PRIVATE_KEY);
   }, 1000);
 
 export const launchStatusUpdater = async (

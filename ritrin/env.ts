@@ -11,7 +11,7 @@ const nsec = makeValidator((i) => {
 });
 
 const envVarsSpec = {
-  PRIVATE_KEY: nsec(),
+  RITRIN_PRIVATE_KEY: nsec(),
   RESOURCE_DIR: str(),
 
   SRTRELAY_URL: url(),
@@ -25,6 +25,6 @@ export type EnvVars = ReturnType<typeof parseEnvVars>;
 export const maskSecretsInEnvVars = (env: EnvVars): Record<string, unknown> => {
   return {
     ...env,
-    PRIVATE_KEY: "*******",
+    RITRIN_PRIVATE_KEY: "*******",
   };
 }
