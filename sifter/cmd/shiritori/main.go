@@ -19,6 +19,7 @@ import (
 
 	"github.com/jiftechnify/strfrui"
 	"github.com/nbd-wtf/go-nostr"
+	"github.com/nbd-wtf/go-nostr/nip19"
 )
 
 var (
@@ -39,6 +40,10 @@ var (
 func readPubkeyListFile(path string, m map[string]struct{}) error {
 	f, err := os.Open(path)
 	if err != nil {
+		// ignore if file doesn't exist
+		if os.IsNotExist(err) {
+			return nil
+		}
 		return err
 	}
 	defer f.Close()
@@ -54,6 +59,18 @@ func readPubkeyListFile(path string, m map[string]struct{}) error {
 	return nil
 }
 
+func nsecToHexPubkey(nsec string) (string, error) {
+	t, sk, err := nip19.Decode(nsec)
+	if err != nil || t != "nsec" {
+		return "", errors.New("malformed nsec")
+	}
+	pk, err := nostr.GetPublicKey(sk.(string))
+	if err != nil {
+		return "", errors.New("malformed nsec")
+	}
+	return pk, nil
+}
+
 func initialize() error {
 	http.DefaultClient.Timeout = 5 * time.Second
 
@@ -64,6 +81,17 @@ func initialize() error {
 	if yomiAPIBaseURL = os.Getenv("YOMI_API_BASE_URL"); yomiAPIBaseURL == "" {
 		return errors.New("YOMI_API_BASE_URL is not set in .env")
 	}
+
+	// add ritrin's pubkey to non-restricted pubkeys list
+	ritrinNsec := os.Getenv("RITRIN_PRIVATE_KEY")
+	if ritrinNsec == "" {
+		return errors.New("RITRIN_PRIVATE_KEY is not set in .env")
+	}
+	ritrinPk, err := nsecToHexPubkey(ritrinNsec)
+	if err != nil {
+		return errors.New("malformed RITRIN_PRIVATE_KEY")
+	}
+	nonRestrictedPubkeys[ritrinPk] = struct{}{}
 
 	// load pubkey list
 	if err := readPubkeyListFile(filepath.Join(resourceDirPath, "non_restricted_pubkeys.txt"), nonRestrictedPubkeys); err != nil {

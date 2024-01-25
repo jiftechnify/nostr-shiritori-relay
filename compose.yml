@@ -10,6 +10,7 @@ services:
       - ./resource:/app/resource
       - ./strfry-db:/app/strfry-db
     environment:
+      - RITRIN_PRIVATE_KEY
       - RESOURCE_DIR
       - YOMI_API_BASE_URL
     pid: host
@@ -37,6 +38,7 @@ services:
       - ./resource:/app/resource
       - ./strfry-db:/app/strfry-db
     environment:
+      - RITRIN_PRIVATE_KEY
       - RESOURCE_DIR
       - YOMI_API_BASE_URL
     pid: host
@@ -57,7 +59,7 @@ services:
     environment:
       - RITRIN_PRIVATE_KEY
       - RESOURCE_DIR
-      - SRTRFRY_URL
+      - SRTRELAY_URL
       - YOMI_API_BASE_URL
       - NOZOKIMADO_URL
     depends_on:
