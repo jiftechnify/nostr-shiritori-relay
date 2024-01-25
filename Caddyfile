@@ -14,8 +14,8 @@
 	root * /srv
 
 	route {
-		reverse_proxy @websocket strfry_shiritori:7777
-		reverse_proxy @nip11 strfry_shiritori:7777
+		reverse_proxy @websocket shiritori_relay:7777
+		reverse_proxy @nip11 shiritori_router:7777
 		file_server
 	}
 }
