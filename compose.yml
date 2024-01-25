@@ -1,8 +1,37 @@
 services:
-  strfry_shiritori:
-    build: ./sifter
-    container_name: strfry_shiritori
-    command: --config=config/strfry.conf relay
+  shiritori_relay:
+    build:
+      context: ./sifter
+      dockerfile: ./Dockerfile
+    container_name: strfry_shiritori_relay
+    command: --config=config/relay.conf relay
+    volumes:
+      - ./config:/app/config
+      - ./resource:/app/resource
+      - ./strfry-db:/app/strfry-db
+    environment:
+      - RESOURCE_DIR
+      - YOMI_API_BASE_URL
+    pid: host
+    restart: unless-stopped
+    healthcheck:
+      test: "wget --quiet --spider http://localhost:7777 || exit 1"
+      interval: 5s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
+
+  shiritori_router:
+    build:
+      context: ./sifter
+      dockerfile: ./Dockerfile
+    container_name: strfry_shiritori_router
+    command: --config=config/relay.conf router config/router.conf
     volumes:
       - ./config:/app/config
       - ./resource:/app/resource
@@ -15,15 +44,38 @@ services:
     logging:
       driver: "json-file"
       options:
-        max-size: "50m"
-        max-file: "20"
+        max-size: "10m"
+        max-file: "10"
+
+  shiritori_ritrin:
+    build:
+      context: ./ritrin
+      dockerfile: ./Dockerfile
+    container_name: shiritori_ritrin
+    volumes:
+      - ./resource:/app/resource
+    environment:
+      - RITRIN_PRIVATE_KEY
+      - RESOURCE_DIR
+      - SRTRFRY_URL
+      - YOMI_API_BASE_URL
+      - NOZOKIMADO_URL
+    depends_on:
+      shiritori_relay:
+        condition: service_healthy
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "10"
 
   caddy_shiritori_relay:
     image: caddy:2.7.5
     container_name: caddy_shiritori_relay
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
-      - ./web:/srv
+      - ./nozokimado/dist:/srv
       - caddy_data:/data
       - caddy_config:/config
     restart: unless-stopped
