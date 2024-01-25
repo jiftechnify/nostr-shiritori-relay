@@ -75,6 +75,8 @@ services:
   caddy_shiritori_relay:
     image: caddy:2.7.5
     container_name: caddy_shiritori_relay
+    ports:
+      - 127.0.0.1:8080:80
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - ./nozokimado/dist:/srv
