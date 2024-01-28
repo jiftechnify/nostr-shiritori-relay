@@ -1,14 +1,13 @@
 {
   "imports": {
-    "std/dotenv": "https://deno.land/std@0.210.0/dotenv/mod.ts",
     "std/log": "https://deno.land/std@0.210.0/log/mod.ts",
     "std/path": "https://deno.land/std@0.210.0/path/mod.ts",
     "std/async": "https://deno.land/std@0.210.0/async/mod.ts",
     "rx-nostr": "npm:rx-nostr@1.8.1",
     "rxjs": "npm:rxjs@7.8.1",
     "nostr-tools/event": "npm:nostr-tools@1.17.0/event",
-    "nostr-tools/relay": "npm:nostr-tools@1.17.0/relay",
     "nostr-tools/nip19": "npm:nostr-tools@1.17.0/nip19",
+    "nostr-tools/relay": "npm:nostr-tools@1.17.0/relay",
     "envalid": "https://deno.land/x/envalid@0.1.2/mod.ts"
   },
   "tasks": {

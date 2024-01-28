@@ -221,5 +221,12 @@
     "https://deno.land/x/envalid@0.1.2/reporter.ts": "5affd2863a25cca71e7f249504f0670112e5e1742dd8a3977764e45fa5957dcc",
     "https://deno.land/x/envalid@0.1.2/types.ts": "3c8630c015922739c8e0c3638dd446bbaf627ecccfb9b21329dbd0af82c4236d",
     "https://deno.land/x/envalid@0.1.2/validators.ts": "9252d4a0a70a7c1895be7813596a562cd8b105756f7cbbd8e49caf1bf4998453"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:nostr-tools@1.17.0",
+      "npm:rx-nostr@1.8.1",
+      "npm:rxjs@7.8.1"
+    ]
   }
 }

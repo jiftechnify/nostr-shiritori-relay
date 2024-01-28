@@ -1,6 +1,6 @@
 import { finishEvent } from "nostr-tools/event";
 import { relayInit } from "nostr-tools/relay";
-import * as log from 'std/log';
+import * as log from "std/log";
 import { join } from "std/path";
 import { EnvVars } from "./env.ts";
 import { NostrEvent, NostrEventUnsigned } from "./types.ts";

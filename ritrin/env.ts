@@ -27,4 +27,4 @@ export const maskSecretsInEnvVars = (env: EnvVars): Record<string, unknown> => {
     ...env,
     RITRIN_PRIVATE_KEY: "*******",
   };
-}
+};

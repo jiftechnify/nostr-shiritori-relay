@@ -11,7 +11,7 @@ type CommandDef = {
   handle: (
     event: NostrEvent,
     env: EnvVars,
-    matches: RegExpMatchArray,
+    matches: RegExpMatchArray
   ) => NostrEventPre[] | Promise<NostrEventPre[]>;
 };
 
@@ -115,7 +115,7 @@ export const handleCommand = async (
   const { cmdDef, matches } = cmdMatch;
 
   try {
-    const res = await cmdDef.handle(cmdEv, env, matches,);
+    const res = await cmdDef.handle(cmdEv, env, matches);
     return res.map((e, i) => ({
       ...e,
       created_at: cmdEv.created_at + 1 + i,
