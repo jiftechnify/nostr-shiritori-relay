@@ -1,4 +1,4 @@
-import rawAccountData from "./account_data.json" assert { type: "json" };
+import rawAccountData from "./account_data.json" with { type: "json" };
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { parseEnvVars } from "./env.ts";
 import { AccountData } from "./types.ts";

@@ -3,4 +3,5 @@
   "deno.lint": true,
   "deno.unstable": true,
   "editor.formatOnSave": true,
+  "prettier.enable": false
 }

@@ -8,7 +8,7 @@ import {
 } from "rx-nostr";
 import { filter } from "rxjs";
 import * as log from "std/log";
-import rawAccountData from "./account_data.json" assert { type: "json" };
+import rawAccountData from "./account_data.json" with { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { maskSecretsInEnvVars, parseEnvVars } from "./env.ts";
