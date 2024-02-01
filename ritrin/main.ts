@@ -126,6 +126,7 @@ const main = async () => {
   launchCmdChecker(env);
   launchStatusUpdater(env, writeRelays);
 
+  // setup handler for SIGTERM
   Deno.addSignalListener("SIGTERM", () => {
     log.info("received SIGTERM: shutting down...");
     rxn.dispose();
