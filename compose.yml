@@ -54,6 +54,7 @@ services:
       context: ./ritrin
       dockerfile: ./Dockerfile
     container_name: shiritori_ritrin
+    init: true
     volumes:
       - ./resource:/app/resource
     environment:

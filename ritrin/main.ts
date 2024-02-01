@@ -125,6 +125,11 @@ const main = async () => {
   // launch subsystems
   launchCmdChecker(env);
   launchStatusUpdater(env, writeRelays);
+  Deno.addSignalListener("SIGTERM", () => {
+    log.info("received SIGTERM: shutting down...");
+    rxn.dispose();
+    Deno.exit(0);
+  });
 
   // notify launched
   await publishToRelays(
