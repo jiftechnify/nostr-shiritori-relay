@@ -11,7 +11,7 @@ type CommandDef = {
   handle: (
     event: NostrEvent,
     env: EnvVars,
-    matches: RegExpMatchArray
+    matches: RegExpMatchArray,
   ) => NostrEventPre[] | Promise<NostrEventPre[]>;
 };
 
@@ -80,7 +80,7 @@ const commands: CommandDef[] = [
 ];
 
 export const matchCommand = (
-  input: string
+  input: string,
 ): { cmdDef: CommandDef; matches: RegExpMatchArray } | undefined => {
   if (!input.startsWith("!")) {
     log.info(`not a command: ${input}`);
@@ -106,7 +106,7 @@ export const matchCommand = (
 
 export const handleCommand = async (
   cmdEv: NostrEvent,
-  env: EnvVars
+  env: EnvVars,
 ): Promise<NostrEventUnsigned[]> => {
   const cmdMatch = matchCommand(cmdEv.content);
   if (cmdMatch === undefined) {

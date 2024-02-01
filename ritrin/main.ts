@@ -64,7 +64,7 @@ const main = async () => {
     .pipe(
       verify(),
       uniq(),
-      filter(({ event }) => event.pubkey !== botPubkey)
+      filter(({ event }) => event.pubkey !== botPubkey),
     )
     .subscribe(async ({ event }) => {
       if (event.content.startsWith("!")) {
@@ -125,6 +125,7 @@ const main = async () => {
   // launch subsystems
   launchCmdChecker(env);
   launchStatusUpdater(env, writeRelays);
+
   Deno.addSignalListener("SIGTERM", () => {
     log.info("received SIGTERM: shutting down...");
     rxn.dispose();
@@ -140,7 +141,7 @@ const main = async () => {
       tags: [],
       created_at: currUnixtime(),
     },
-    env.RITRIN_PRIVATE_KEY
+    env.RITRIN_PRIVATE_KEY,
   );
   log.info("Ritrin launched !(ง๑ •̀_•́)ง");
 };

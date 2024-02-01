@@ -1,9 +1,9 @@
 import { debounce } from "std/async";
 import { basename } from "std/path";
 import {
-  LAST_KANA_FILEPATH,
   currUnixtime,
   getNextKana,
+  LAST_KANA_FILEPATH,
   publishToRelays,
 } from "./common.ts";
 import { EnvVars } from "./env.ts";
@@ -25,7 +25,7 @@ const updateStatusOnNextKanaChange = (env: EnvVars, writeRelays: string[]) =>
 
 export const launchStatusUpdater = async (
   env: EnvVars,
-  writeRelays: string[]
+  writeRelays: string[],
 ) => {
   const watcher = Deno.watchFs(env.RESOURCE_DIR);
 
@@ -33,7 +33,7 @@ export const launchStatusUpdater = async (
 
   for await (const event of watcher) {
     const lastKanaPath = event.paths.find(
-      (p) => basename(p) === LAST_KANA_FILEPATH
+      (p) => basename(p) === LAST_KANA_FILEPATH,
     );
     if (
       lastKanaPath !== undefined &&
