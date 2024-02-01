@@ -32,7 +32,7 @@ const main = async () => {
   });
 
   const env = parseEnvVars();
-  log.info(`environment vars: ${maskSecretsInEnvVars(env)}`);
+  log.info(`environment vars: ${JSON.stringify(maskSecretsInEnvVars(env))}`);
 
   const botPubkey = getPublicKey(env.RITRIN_PRIVATE_KEY);
 
