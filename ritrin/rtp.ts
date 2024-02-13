@@ -60,7 +60,11 @@ export const launchEventAcceptanceHook = (
         continue;
       }
 
-      log.info(`received event acceptance notification: ${evAcceptance}`);
+      log.info(
+        `received event acceptance notification: ${
+          JSON.stringify(evAcceptance)
+        }`,
+      );
       await sendReactionToAcceptedEvent(evAcceptance, env, writeRelays);
 
       conn.close();
