@@ -1,4 +1,5 @@
 import { debounce } from "std/async";
+import * as log from "std/log";
 import { basename } from "std/path";
 import {
   currUnixtime,
@@ -27,8 +28,9 @@ export const launchStatusUpdater = async (
   env: EnvVars,
   writeRelays: string[],
 ) => {
-  const watcher = Deno.watchFs(env.RESOURCE_DIR);
+  log.info("launching status updater...");
 
+  const watcher = Deno.watchFs(env.RESOURCE_DIR);
   const updateStatus = updateStatusOnNextKanaChange(env, writeRelays);
 
   for await (const event of watcher) {
