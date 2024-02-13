@@ -6,6 +6,8 @@ import { EnvVars } from "./env.ts";
 type EventAcceptance = {
   pubkey: string;
   eventId: string;
+  head: string;
+  last: string;
   acceptedAt: number;
 };
 

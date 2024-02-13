@@ -207,6 +207,8 @@ func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 	sendEventAcceptanceNotif(eventAcceptance{
 		Pubkey:     input.Event.PubKey,
 		EventID:    input.Event.ID,
+		Head:       string(hl.Head),
+		Last:       string(hl.Last),
 		AcceptedAt: clock.Now().Unix(),
 	})
 	log.Printf("✅Accepted! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
@@ -280,6 +282,8 @@ func isCommandValid(cmd string) bool {
 type eventAcceptance struct {
 	Pubkey     string `json:"pubkey"`
 	EventID    string `json:"eventId"`
+	Head       string `json:"head"`
+	Last       string `json:"last"`
 	AcceptedAt int64  `json:"acceptedAt"`
 }
 
