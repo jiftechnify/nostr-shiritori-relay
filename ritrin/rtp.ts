@@ -6,7 +6,7 @@ import { EnvVars } from "./env.ts";
 type EventAcceptance = {
   pubkey: string;
   eventId: string;
-  accepted_at: number;
+  acceptedAt: number;
 };
 
 export const sendReactionToAcceptedEvent = async (
