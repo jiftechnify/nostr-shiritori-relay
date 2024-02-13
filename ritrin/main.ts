@@ -12,6 +12,7 @@ import rawAccountData from "./account_data.json" with { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { maskSecretsInEnvVars, parseEnvVars } from "./env.ts";
+import { launchEventAcceptanceHook } from "./rtp.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData } from "./types.ts";
 
@@ -64,29 +65,16 @@ const main = async () => {
     .pipe(
       verify(),
       uniq(),
-      filter(({ event }) => event.pubkey !== botPubkey),
+      filter(({ event }) =>
+        event.pubkey !== botPubkey && event.content.startsWith("!")
+      ),
     )
     .subscribe(async ({ event }) => {
-      if (event.content.startsWith("!")) {
-        // handle commands
-        const res = await handleCommand(event, env);
-        for (const e of res) {
-          rxn.send(e, { seckey: env.RITRIN_PRIVATE_KEY });
-        }
-      } else {
-        // send reactions to shiritori-connected posts
-        const k7 = {
-          kind: 7,
-          content: "❗",
-          tags: [
-            ["e", event.id, ""],
-            ["p", event.pubkey, ""],
-          ],
-          created_at: currUnixtime(),
-        };
-        await publishToRelays(writeRelays, k7, env.RITRIN_PRIVATE_KEY);
+      // handle commands
+      const res = await handleCommand(event, env);
+      for (const e of res) {
+        rxn.send(e, { seckey: env.RITRIN_PRIVATE_KEY });
       }
-
       // schedule force reconnect every time post received
       scheduleForceReconnect();
     });
@@ -124,6 +112,7 @@ const main = async () => {
 
   // launch subsystems
   launchCmdChecker(env);
+  launchEventAcceptanceHook(env, writeRelays);
   launchStatusUpdater(env, writeRelays);
 
   // setup handler for SIGTERM

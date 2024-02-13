@@ -203,6 +203,12 @@ func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 	if err := saveLastKana(f, hl.Last); err != nil {
 		return nil, err
 	}
+	// send event acceptance notification to ritrin
+	sendEventAcceptanceNotif(eventAcceptance{
+		Pubkey:     input.Event.PubKey,
+		EventID:    input.Event.ID,
+		AcceptedAt: clock.Now().Unix(),
+	})
 	log.Printf("✅Accepted! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
 	return input.Accept()
 }
@@ -269,6 +275,28 @@ func isCommandValid(cmd string) bool {
 		return false
 	}
 	return resBuf.String() == "ok"
+}
+
+type eventAcceptance struct {
+	Pubkey     string `json:"pubkey"`
+	EventID    string `json:"eventId"`
+	AcceptedAt int64  `json:"acceptedAt"`
+}
+
+func sendEventAcceptanceNotif(ea eventAcceptance) {
+	hook, err := net.Dial("unix", filepath.Join(resourceDirPath, "event_acceptance_hook.sock"))
+	if err != nil {
+		log.Printf("failed to connect to event acceptance hook: %v", err)
+		return
+	}
+	defer hook.Close()
+
+	if err := json.NewEncoder(hook).Encode(ea); err != nil {
+		log.Printf("failed to send event acceptance notification: %v", err)
+		return
+	}
+
+	log.Printf("sent event acceptance notification: %+v", ea)
 }
 
 var allowedConnections = map[rune][]rune{

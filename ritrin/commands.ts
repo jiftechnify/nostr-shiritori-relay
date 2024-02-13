@@ -162,8 +162,9 @@ export const launchCmdChecker = (env: EnvVars) => {
     }
   };
 
+  log.info("launching command checker...");
   serve().catch((err) => {
-    log.error(`error from launch command checker: ${err}`);
+    log.error(`error while launching command checker: ${err}`);
     Deno.exit(1);
   });
 };
