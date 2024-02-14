@@ -221,6 +221,7 @@ const saveRitrinPointTxs = async (
 ) => {
   const now = Date.now();
   const jobs = txs.map((tx) => {
+    log.info(`granted ritrin point: ${JSON.stringify(tx)}`);
     const key = ritrinPointTxKey(tx.pubkey, now, tx.type);
     return kv.set(key, tx);
   });
@@ -265,12 +266,17 @@ export const launchEventAcceptanceHook = (
           JSON.stringify(evAcceptance)
         }`,
       );
-      await grantRitrinPointsAndSendReactions(
-        kv,
-        evAcceptance,
-        env,
-        writeRelays,
-      );
+
+      try {
+        await grantRitrinPointsAndSendReactions(
+          kv,
+          evAcceptance,
+          env,
+          writeRelays,
+        );
+      } catch (err) {
+        log.error(`error while processing event acceptance: ${err}`);
+      }
 
       conn.close();
     }
