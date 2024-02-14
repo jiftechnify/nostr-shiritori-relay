@@ -148,6 +148,30 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
     },
   );
   await t.step(
+    "don't grant hibernation-breaking point if authors of two events are same",
+    () => {
+      const lastAcceptanceRec = {
+        pubkey: "p1",
+        eventId: "e1",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        hibernationBreaking: false,
+      };
+      const newAcceptance = {
+        pubkey: "p1", // the same author
+        eventId: "e2",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
+        head: "ア",
+        last: "イ",
+      };
+
+      const [pt] = grantHibernationBreakingPoint(
+        lastAcceptanceRec,
+        newAcceptance,
+      );
+      assert(pt === undefined, "pt should be undefined");
+    },
+  );
+  await t.step(
     "don't grant hibernation-breaking point if newly accepted post doesn't change the last kana",
     () => {
       const lastAcceptanceRec = {
@@ -242,6 +266,30 @@ Deno.test("grantNicePassPoint", async (t) => {
       };
 
       const [pt] = grantNicePassPoint(
+        lastAcceptanceRec,
+        newAcceptance,
+      );
+      assert(pt === undefined, "pt should be undefined");
+    },
+  );
+  await t.step(
+    "don't grant nice-pass point if authors of two events are same",
+    () => {
+      const lastAcceptanceRec = {
+        pubkey: "p1",
+        eventId: "e1",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        hibernationBreaking: false,
+      };
+      const newAcceptance = {
+        pubkey: "p1", // the same author
+        eventId: "e2",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
+        head: "ア",
+        last: "イ",
+      };
+
+      const [pt] = grantHibernationBreakingPoint(
         lastAcceptanceRec,
         newAcceptance,
       );

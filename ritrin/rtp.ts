@@ -153,7 +153,12 @@ export const grantHibernationBreakingPoint = (
   if (lastAcceptanceRec === null) {
     return [];
   }
+  if (lastAcceptanceRec.pubkey === newAcceptance.pubkey) {
+    // grant hibernation-breaking point only if new event's author is different than prev event' author
+    return [];
+  }
   if (newAcceptance.head === newAcceptance.last) {
+    // grant hibernation-breaking point only if the last kana changed
     return [];
   }
   if (
@@ -183,7 +188,12 @@ export const grantNicePassPoint = (
   if (lastAcceptance === null) {
     return [];
   }
+  if (lastAcceptance.pubkey === newAcceptance.pubkey) {
+    // grant nice-pass point only if authors of previous event and new event are different
+    return [];
+  }
   if (!lastAcceptance.hibernationBreaking) {
+    // grant nice-pass point only if the previous acceptance is hibernation-breaking
     return [];
   }
   if (
