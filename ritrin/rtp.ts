@@ -34,7 +34,8 @@ export const grantRitrinPointsAndSendReactions = async (
     })
     : [{
       kind: 7,
-      content: ea.head === ea.last ? "❗" : "❕",
+      // white: last kana not changed, red: last kana changed
+      content: ea.head === ea.last ? "❕" : "❗",
       tags: [
         ["e", ea.eventId, ""],
         ["p", ea.pubkey, ""],
@@ -56,7 +57,7 @@ type RitrinPointTransaction = {
   amount: number;
   pubkey: string;
   eventId: string;
-  acceptedAt: number;
+  grantedAt: number;
 };
 
 const reactionContentForPointType: Record<RitrinPointType, string> = {
@@ -83,18 +84,18 @@ const grantRitrinPoints = async (
       [number, LastEventAcceptanceRecord]
     >([myLastAcceptedAtKey, lastEventAcceptanceKey]);
 
-    const bonuses = [
-      ...grantDailyBonus(myLastAcceptedAt.value, newAcceptance),
-      ...grantHibernationBreakingBonus(
+    const grantedPoints = [
+      ...grantDailyPoint(myLastAcceptedAt.value, newAcceptance),
+      ...grantHibernationBreakingPoint(
         lastEventAcceptance.value,
         newAcceptance,
       ),
-      ...grantNicePassBonus(
+      ...grantNicePassPoint(
         lastEventAcceptance.value,
         newAcceptance,
       ),
     ];
-    const hibernationBreaking = bonuses.some((b) =>
+    const hibernationBreaking = grantedPoints.some((b) =>
       b.type === "hibernation-breaking"
     );
 
@@ -111,22 +112,22 @@ const grantRitrinPoints = async (
         newLastAcceptanceRecord,
       )
       .commit();
-    return bonuses;
+    return grantedPoints;
   }
-
-  console.log("unreachable");
+  console.error("unreachable");
   return [];
 };
 
-const unixDay = (unixtime: number) => Math.floor(unixtime / 86400);
+export const unixDayJst = (unixtimeSec: number) =>
+  Math.floor((unixtimeSec + 9 * 3600) / (24 * 3600));
 
-const grantDailyBonus = (
+export const grantDailyPoint = (
   lastAcceptedAt: number | null,
   newAcceptance: EventAcceptance,
 ): RitrinPointTransaction[] => {
   if (
     lastAcceptedAt !== null &&
-    unixDay(newAcceptance.acceptedAt) === unixDay(lastAcceptedAt)
+    unixDayJst(newAcceptance.acceptedAt) === unixDayJst(lastAcceptedAt)
   ) {
     return [];
   }
@@ -137,7 +138,7 @@ const grantDailyBonus = (
       pubkey: newAcceptance.pubkey,
       eventId: newAcceptance.eventId,
       amount: 1,
-      acceptedAt: newAcceptance.acceptedAt,
+      grantedAt: newAcceptance.acceptedAt,
     },
   ];
 };
@@ -145,18 +146,19 @@ const grantDailyBonus = (
 // threshold of considering inactivity as "hibernation": 12 hours
 const hibernationThreshold = 12 * 60 * 60;
 
-const grantHibernationBreakingBonus = (
-  lastAcceptance: LastEventAcceptanceRecord | null,
+export const grantHibernationBreakingPoint = (
+  lastAcceptanceRec: LastEventAcceptanceRecord | null,
   newAcceptance: EventAcceptance,
 ): RitrinPointTransaction[] => {
-  if (lastAcceptance === null) {
+  if (lastAcceptanceRec === null) {
     return [];
   }
   if (newAcceptance.head === newAcceptance.last) {
     return [];
   }
   if (
-    newAcceptance.acceptedAt - lastAcceptance.acceptedAt < hibernationThreshold
+    newAcceptance.acceptedAt - lastAcceptanceRec.acceptedAt <
+      hibernationThreshold
   ) {
     return [];
   }
@@ -166,7 +168,7 @@ const grantHibernationBreakingBonus = (
     pubkey: newAcceptance.pubkey,
     eventId: newAcceptance.eventId,
     amount: 1,
-    acceptedAt: newAcceptance.acceptedAt,
+    grantedAt: newAcceptance.acceptedAt,
   }];
 };
 
@@ -174,7 +176,7 @@ const grantHibernationBreakingBonus = (
 // in this case, preceding acceptance considered as "nice pass"
 const shortAcceptanceSpanThreshold = 10 * 60;
 
-const grantNicePassBonus = (
+export const grantNicePassPoint = (
   lastAcceptance: LastEventAcceptanceRecord | null,
   newAcceptance: EventAcceptance,
 ): RitrinPointTransaction[] => {
@@ -193,17 +195,18 @@ const grantNicePassBonus = (
 
   return [{
     type: "nice-pass",
-    pubkey: newAcceptance.pubkey,
-    eventId: newAcceptance.eventId,
+    pubkey: lastAcceptance.pubkey,
+    eventId: lastAcceptance.eventId,
     amount: 1,
-    acceptedAt: newAcceptance.acceptedAt,
+    grantedAt: newAcceptance.acceptedAt,
   }];
 };
 
 const ritrinPointTxKey = (
   pubkey: string,
   createdAtMs: number = Date.now(),
-): Deno.KvKey => ["ritrin_point_transaction", pubkey, createdAtMs];
+  pointType: RitrinPointType,
+): Deno.KvKey => ["ritrin_point_transaction", pubkey, createdAtMs, pointType];
 
 type LastEventAcceptanceRecord = {
   pubkey: string;
@@ -218,7 +221,7 @@ const saveRitrinPointTxs = async (
 ) => {
   const now = Date.now();
   const jobs = txs.map((tx) => {
-    const key = ritrinPointTxKey(tx.pubkey, now);
+    const key = ritrinPointTxKey(tx.pubkey, now, tx.type);
     return kv.set(key, tx);
   });
   await Promise.all(jobs);
