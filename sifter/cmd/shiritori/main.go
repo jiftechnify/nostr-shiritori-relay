@@ -203,8 +203,8 @@ func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 	if err := saveLastKana(f, hl.Last); err != nil {
 		return nil, err
 	}
-	// send event acceptance notification to ritrin
-	sendEventAcceptanceNotif(eventAcceptance{
+	// notify shiritori connection to ritrin
+	notifyShiritoriConnection(shiritoriConnectedPost{
 		Pubkey:     input.Event.PubKey,
 		EventID:    input.Event.ID,
 		Head:       string(hl.Head),
@@ -279,7 +279,7 @@ func isCommandValid(cmd string) bool {
 	return resBuf.String() == "ok"
 }
 
-type eventAcceptance struct {
+type shiritoriConnectedPost struct {
 	Pubkey     string `json:"pubkey"`
 	EventID    string `json:"eventId"`
 	Head       string `json:"head"`
@@ -287,20 +287,20 @@ type eventAcceptance struct {
 	AcceptedAt int64  `json:"acceptedAt"`
 }
 
-func sendEventAcceptanceNotif(ea eventAcceptance) {
-	hook, err := net.Dial("unix", filepath.Join(resourceDirPath, "event_acceptance_hook.sock"))
+func notifyShiritoriConnection(scp shiritoriConnectedPost) {
+	hook, err := net.Dial("unix", filepath.Join(resourceDirPath, "shiritori_connection_hook.sock"))
 	if err != nil {
-		log.Printf("failed to connect to event acceptance hook: %v", err)
+		log.Printf("failed to connect to shiritori connection hook: %v", err)
 		return
 	}
 	defer hook.Close()
 
-	if err := json.NewEncoder(hook).Encode(ea); err != nil {
-		log.Printf("failed to send event acceptance notification: %v", err)
+	if err := json.NewEncoder(hook).Encode(scp); err != nil {
+		log.Printf("failed to notify shiritori connection: %v", err)
 		return
 	}
 
-	log.Printf("sent event acceptance notification: %+v", ea)
+	log.Printf("notified shiritori connection: %+v", scp)
 }
 
 var allowedConnections = map[rune][]rune{
