@@ -1,7 +1,7 @@
 import * as log from "std/log";
-import { join } from "std/path";
+import * as path from "std/path";
 import { currUnixtime, publishToRelays } from "./common.ts";
-import { EnvVars } from "./env.ts";
+import { AppContext } from "./context.ts";
 
 type ShiritoriConnectedPost = {
   pubkey: string;
@@ -34,12 +34,13 @@ const reactionContentForPointType: Record<RitrinPointType, string> = {
 };
 
 export const launchShiritoriConnectionHook = (
-  env: EnvVars,
-  writeRelays: string[],
+  appCtx: AppContext,
 ) => {
   const serve = async () => {
-    const kv = await Deno.openKv(join(env.RESOURCE_DIR, "rtp.db"));
-    const sockPath = join(env.RESOURCE_DIR, "shiritori_connection_hook.sock");
+    const sockPath = path.join(
+      appCtx.env.RESOURCE_DIR,
+      "shiritori_connection_hook.sock",
+    );
     try {
       Deno.removeSync(sockPath);
     } catch (err) {
@@ -72,10 +73,8 @@ export const launchShiritoriConnectionHook = (
 
       try {
         await handleShiritoriConnection(
-          kv,
           scp,
-          env,
-          writeRelays,
+          appCtx,
         );
       } catch (err) {
         log.error(
@@ -95,13 +94,11 @@ export const launchShiritoriConnectionHook = (
 };
 
 export const handleShiritoriConnection = async (
-  kv: Deno.Kv,
   newScp: ShiritoriConnectedPost,
-  env: EnvVars,
-  writeRelays: string[],
+  { env, writeRelayUrls, ritrinPointKv }: AppContext,
 ) => {
-  const rtps = await grantRitrinPoints(kv, newScp);
-  await saveRitrinPointTxs(kv, rtps);
+  const rtps = await grantRitrinPoints(ritrinPointKv, newScp);
+  await saveRitrinPointTxs(ritrinPointKv, rtps);
 
   const reactions = rtps.length > 0
     ? rtps.map(({ type, eventId, pubkey }) => {
@@ -129,7 +126,7 @@ export const handleShiritoriConnection = async (
   // send reactions to accepted / nice-pass posts
   await Promise.all(
     reactions.map((k7) =>
-      publishToRelays(writeRelays, k7, env.RITRIN_PRIVATE_KEY)
+      publishToRelays(writeRelayUrls, k7, env.RITRIN_PRIVATE_KEY)
     ),
   );
 };

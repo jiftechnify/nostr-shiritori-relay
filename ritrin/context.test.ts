@@ -4,7 +4,7 @@ import {
   describe,
   it,
 } from "https://deno.land/std@0.210.0/testing/bdd.ts";
-import { parseEnvVars } from "./env.ts";
+import { parseEnvVars } from "./context.ts";
 
 const TEST_PRIVATE_KEY = {
   nsec: "nsec1kcnh9qp4tg8uqjx2rrt442wtkcqdy2k9h95ddgspfxnzrawzh0ls9arstu",
