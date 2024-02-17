@@ -159,10 +159,12 @@ const grantRitrinPoints = async (
       ...grantHibernationBreakingPoint(
         lastConnection.value,
         newScp,
+        hibernationMinIntervalSec,
       ),
       ...grantNicePassPoint(
         lastConnection.value,
         newScp,
+        nicePassMaxIntervalSec,
       ),
     ];
     const hibernationBreaking = grantedPoints.some((b) =>
@@ -214,11 +216,13 @@ export const grantDailyPoint = (
 };
 
 // threshold of considering inactivity as "hibernation": 12 hours
-const hibernationThreshold = 12 * 60 * 60;
+// TODO:make it configurable by env var
+const hibernationMinIntervalSec = 12 * 60 * 60;
 
 export const grantHibernationBreakingPoint = (
   lastSc: LastShiritoriConnectionRecord | null,
   newScp: ShiritoriConnectedPost,
+  minIntervalSec: number,
 ): RitrinPointTransaction[] => {
   if (lastSc === null) {
     return [];
@@ -233,7 +237,7 @@ export const grantHibernationBreakingPoint = (
   }
   if (
     newScp.acceptedAt - lastSc.acceptedAt <
-      hibernationThreshold
+      minIntervalSec
   ) {
     return [];
   }
@@ -249,11 +253,13 @@ export const grantHibernationBreakingPoint = (
 
 // threshold of "shortness" of consecutive shiritori connection span: 10 minutes
 // in this case, preceding connection considered as "nice pass"
-const shortConnectionSpanThreshold = 10 * 60;
+// TODO:make it configurable by env var
+const nicePassMaxIntervalSec = 10 * 60;
 
 export const grantNicePassPoint = (
   lastSc: LastShiritoriConnectionRecord | null,
   newScp: ShiritoriConnectedPost,
+  maxIntervalSec: number,
 ): RitrinPointTransaction[] => {
   if (lastSc === null) {
     return [];
@@ -268,7 +274,7 @@ export const grantNicePassPoint = (
   }
   if (
     newScp.acceptedAt - lastSc.acceptedAt >
-      shortConnectionSpanThreshold
+      maxIntervalSec
   ) {
     return [];
   }

@@ -117,6 +117,7 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       const [pt] = grantHibernationBreakingPoint(
         lastSc,
         newScp,
+        12 * 60 * 60,
       );
       assert(pt !== undefined, "pt should not be undefined");
       assertEquals(pt, {
@@ -143,6 +144,7 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       const [pt] = grantHibernationBreakingPoint(
         lastSc,
         newScp,
+        12 * 60 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -167,6 +169,7 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       const [pt] = grantHibernationBreakingPoint(
         lastSc,
         newScp,
+        12 * 60 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -191,6 +194,7 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       const [pt] = grantHibernationBreakingPoint(
         lastSc,
         newScp,
+        12 * 60 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -215,6 +219,7 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       const [pt] = grantHibernationBreakingPoint(
         lastSc,
         newScp,
+        12 * 60 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -242,6 +247,7 @@ Deno.test("grantNicePassPoint", async (t) => {
       const [pt] = grantNicePassPoint(
         lastSc,
         newScp,
+        10 * 60,
       );
       assert(pt !== undefined, "pt should not be undefined");
       assertEquals(pt, {
@@ -268,6 +274,7 @@ Deno.test("grantNicePassPoint", async (t) => {
       const [pt] = grantNicePassPoint(
         lastSc,
         newScp,
+        10 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -292,6 +299,7 @@ Deno.test("grantNicePassPoint", async (t) => {
       const [pt] = grantHibernationBreakingPoint(
         lastSc,
         newScp,
+        12 * 60 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -316,6 +324,7 @@ Deno.test("grantNicePassPoint", async (t) => {
       const [pt] = grantNicePassPoint(
         lastSc,
         newScp,
+        10 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -340,6 +349,7 @@ Deno.test("grantNicePassPoint", async (t) => {
       const [pt] = grantNicePassPoint(
         lastSc,
         newScp,
+        10 * 60,
       );
       assert(pt === undefined, "pt should be undefined");
     },
