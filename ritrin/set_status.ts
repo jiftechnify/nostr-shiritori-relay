@@ -9,7 +9,7 @@ import {
 } from "./common.ts";
 import { AppContext, EnvVars } from "./context.ts";
 
-const updateStatusOnNextKanaChange = (env: EnvVars, writeRelays: string[]) =>
+const updateStatusOnNextKanaChange = (env: EnvVars, writeRelayUrls: string[]) =>
   debounce(async () => {
     const nextKana = await getNextKana(env);
     const k30315 = {
@@ -21,7 +21,7 @@ const updateStatusOnNextKanaChange = (env: EnvVars, writeRelays: string[]) =>
       ],
       created_at: currUnixtime(),
     };
-    await publishToRelays(writeRelays, k30315, env.RITRIN_PRIVATE_KEY);
+    await publishToRelays(writeRelayUrls, k30315, env.RITRIN_PRIVATE_KEY);
   }, 1000);
 
 export const launchStatusUpdater = async (

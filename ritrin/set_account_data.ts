@@ -20,7 +20,9 @@ const relayListTags = acctData.relays.reduce((a, r) => {
 
 if (import.meta.main) {
   const env = parseEnvVars();
-  const writeRelays = acctData.relays.filter((r) => r.write).map((r) => r.url);
+  const writeRelayUrls = acctData.relays.filter((r) => r.write).map((r) =>
+    r.url
+  );
 
   const k0 = {
     kind: 0,
@@ -43,7 +45,7 @@ if (import.meta.main) {
 
   await Promise.allSettled(
     [k0, k3, k10002].map(async (ev) => {
-      await publishToRelays(writeRelays, ev, env.RITRIN_PRIVATE_KEY, 10);
+      await publishToRelays(writeRelayUrls, ev, env.RITRIN_PRIVATE_KEY, 10);
     }),
   );
 }
