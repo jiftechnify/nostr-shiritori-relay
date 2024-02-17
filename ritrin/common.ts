@@ -2,7 +2,7 @@ import { finishEvent } from "nostr-tools/event";
 import { relayInit } from "nostr-tools/relay";
 import * as log from "std/log";
 import { join } from "std/path";
-import { EnvVars } from "./env.ts";
+import { EnvVars } from "./context.ts";
 import { NostrEvent, NostrEventUnsigned } from "./types.ts";
 
 export const currUnixtime = (): number => Math.floor(Date.now() / 1000);
@@ -11,7 +11,7 @@ export const publishToRelays = async (
   relayUrls: string[],
   ev: NostrEventUnsigned,
   privateKey: string,
-  timeoutSec = 5
+  timeoutSec = 5,
 ): Promise<void> => {
   let canceled = false;
   const timeout = (rurl: string) =>
@@ -41,7 +41,7 @@ export const publishToRelays = async (
 
   log.info(`publishing event to ${relayUrls.length} relays...`);
   await Promise.allSettled(
-    relayUrls.map((rurl) => Promise.race([pub(rurl, signed), timeout(rurl)]))
+    relayUrls.map((rurl) => Promise.race([pub(rurl, signed), timeout(rurl)])),
   );
 };
 

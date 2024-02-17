@@ -8,11 +8,12 @@ import {
 } from "rx-nostr";
 import { filter } from "rxjs";
 import * as log from "std/log";
+import * as path from "std/path";
 import rawAccountData from "./account_data.json" with { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
-import { maskSecretsInEnvVars, parseEnvVars } from "./env.ts";
-import { launchEventAcceptanceHook } from "./rtp.ts";
+import { AppContext, maskSecretsInEnvVars, parseEnvVars } from "./context.ts";
+import { launchShiritoriConnectionHook } from "./ritrin_point.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData } from "./types.ts";
 
@@ -32,14 +33,23 @@ const main = async () => {
     },
   });
 
+  // initialize app context
   const env = parseEnvVars();
   log.info(`environment vars: ${JSON.stringify(maskSecretsInEnvVars(env))}`);
 
-  const botPubkey = getPublicKey(env.RITRIN_PRIVATE_KEY);
-
-  const writeRelays = (rawAccountData as AccountData).relays
+  const writeRelayUrls = (rawAccountData as AccountData).relays
     .filter((r) => r.write)
     .map((r) => r.url);
+  const ritrinPointKv = await Deno.openKv(
+    path.join(env.RESOURCE_DIR, "rtp.db"),
+  );
+  const appCtx: AppContext = {
+    env,
+    writeRelayUrls,
+    ritrinPointKv,
+  };
+
+  const botPubkey = getPublicKey(env.RITRIN_PRIVATE_KEY);
 
   const rxn = createRxNostr();
   await rxn.switchRelays([env.SRTRELAY_URL]);
@@ -111,9 +121,9 @@ const main = async () => {
   scheduleForceReconnect();
 
   // launch subsystems
-  launchCmdChecker(env);
-  launchEventAcceptanceHook(env, writeRelays);
-  launchStatusUpdater(env, writeRelays);
+  launchCmdChecker(appCtx);
+  launchShiritoriConnectionHook(appCtx);
+  launchStatusUpdater(appCtx);
 
   // setup handler for SIGTERM
   Deno.addSignalListener("SIGTERM", () => {
@@ -124,7 +134,7 @@ const main = async () => {
 
   // notify launched
   await publishToRelays(
-    writeRelays,
+    writeRelayUrls,
     {
       kind: 1,
       content: "!(ง๑ •̀_•́)ง",

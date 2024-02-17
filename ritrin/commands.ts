@@ -1,7 +1,7 @@
 import * as log from "std/log";
 import { join } from "std/path";
 import { getNextKana } from "./common.ts";
-import { EnvVars } from "./env.ts";
+import { AppContext, EnvVars } from "./context.ts";
 import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
 
 type CommandDef = {
@@ -133,7 +133,7 @@ export const handleCommand = async (
   }
 };
 
-export const launchCmdChecker = (env: EnvVars) => {
+export const launchCmdChecker = ({ env }: AppContext) => {
   const serve = async () => {
     const sockPath = join(env.RESOURCE_DIR, "bot_cmd_check.sock");
     try {

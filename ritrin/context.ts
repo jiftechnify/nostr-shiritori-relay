@@ -28,3 +28,9 @@ export const maskSecretsInEnvVars = (env: EnvVars): Record<string, unknown> => {
     RITRIN_PRIVATE_KEY: "*******",
   };
 };
+
+export type AppContext = {
+  env: EnvVars;
+  writeRelayUrls: string[];
+  ritrinPointKv: Deno.Kv;
+};
