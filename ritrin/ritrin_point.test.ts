@@ -8,7 +8,7 @@ import {
   grantHibernationBreakingPoint,
   grantNicePassPoint,
   unixDayJst,
-} from "./rtp.ts";
+} from "./ritrin_point.ts";
 
 const dateToUnixtimeSec = (date: Date) => Math.floor(date.getTime() / 1000);
 
@@ -28,7 +28,7 @@ Deno.test("unixDayJst", async (t) => {
 
 Deno.test("grantDailyPoint", async (t) => {
   await t.step(
-    "grant daily point if it's the first shiritori acceptance for the user (e.g. lastAcceptedAt is null)",
+    "grant daily point if it's the first shiritori connected post for the user (e.g. lastAcceptedAt is null)",
     () => {
       const [pt] = grantDailyPoint(null, {
         pubkey: "p1",
@@ -100,23 +100,23 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
   await t.step(
     "grant hibernation-breaking point if all conditions meet",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
         hibernationBreaking: false,
       };
-      const newAcceptance = {
-        pubkey: "p2",
+      const newScp = {
+        pubkey: "p2", // author is different
         eventId: "e2",
-        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")), // interval is long enough
         head: "ア",
-        last: "イ",
+        last: "イ", // last kana changed
       };
 
       const [pt] = grantHibernationBreakingPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt !== undefined, "pt should not be undefined");
       assertEquals(pt, {
@@ -124,15 +124,15 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
         amount: 1,
         pubkey: "p2",
         eventId: "e2",
-        grantedAt: newAcceptance.acceptedAt,
+        grantedAt: newScp.acceptedAt,
       });
     },
   );
   await t.step(
-    "don't grant hibernation-breaking point if lastAcceptanceRec is null",
+    "don't grant hibernation-breaking point if lastSc is null",
     () => {
-      const lastAcceptanceRec = null;
-      const newAcceptance = {
+      const lastSc = null;
+      const newScp = {
         pubkey: "p2",
         eventId: "e2",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
@@ -141,8 +141,8 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       };
 
       const [pt] = grantHibernationBreakingPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -150,14 +150,14 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
   await t.step(
     "don't grant hibernation-breaking point if authors of two events are same",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
         hibernationBreaking: false,
       };
-      const newAcceptance = {
-        pubkey: "p1", // the same author
+      const newScp = {
+        pubkey: "p1", // same author
         eventId: "e2",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
         head: "ア",
@@ -165,8 +165,8 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       };
 
       const [pt] = grantHibernationBreakingPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -174,23 +174,23 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
   await t.step(
     "don't grant hibernation-breaking point if newly accepted post doesn't change the last kana",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
         hibernationBreaking: false,
       };
-      const newAcceptance = {
+      const newScp = {
         pubkey: "p2",
         eventId: "e2",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
         head: "ア",
-        last: "ア",
+        last: "ア", // last kana didn't change
       };
 
       const [pt] = grantHibernationBreakingPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -198,23 +198,23 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
   await t.step(
     "don't grant hibernation-breaking point if interval is below the threshold",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
         hibernationBreaking: false,
       };
-      const newAcceptance = {
+      const newScp = {
         pubkey: "p2",
         eventId: "e2",
-        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T11:00:00+09:00")),
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T11:00:00+09:00")), // interval is too short
         head: "ア",
         last: "イ",
       };
 
       const [pt] = grantHibernationBreakingPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -223,25 +223,25 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
 
 Deno.test("grantNicePassPoint", async (t) => {
   await t.step(
-    "grant hibernation-breaking point if all conditions meet",
+    "grant nice-pass point if all conditions meet",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
-        hibernationBreaking: true,
+        hibernationBreaking: true, // last connection was hibernation-breaking
       };
-      const newAcceptance = {
-        pubkey: "p2",
+      const newScp = {
+        pubkey: "p2", // author is different
         eventId: "e2",
-        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:05:00+09:00")),
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:05:00+09:00")), // interval is short enough
         head: "ア",
         last: "イ",
       };
 
       const [pt] = grantNicePassPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt !== undefined, "pt should not be undefined");
       assertEquals(pt, {
@@ -249,15 +249,15 @@ Deno.test("grantNicePassPoint", async (t) => {
         amount: 1,
         pubkey: "p1",
         eventId: "e1",
-        grantedAt: newAcceptance.acceptedAt,
+        grantedAt: newScp.acceptedAt,
       });
     },
   );
   await t.step(
-    "don't grant nice-pass point if lastAcceptanceRec is null",
+    "don't grant nice-pass point if lastSc is null",
     () => {
-      const lastAcceptanceRec = null; // no last acceptance
-      const newAcceptance = {
+      const lastSc = null; // no last acceptance
+      const newScp = {
         pubkey: "p2",
         eventId: "e2",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:05:00+09:00")),
@@ -266,8 +266,8 @@ Deno.test("grantNicePassPoint", async (t) => {
       };
 
       const [pt] = grantNicePassPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -275,14 +275,14 @@ Deno.test("grantNicePassPoint", async (t) => {
   await t.step(
     "don't grant nice-pass point if authors of two events are same",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
         hibernationBreaking: false,
       };
-      const newAcceptance = {
-        pubkey: "p1", // the same author
+      const newScp = {
+        pubkey: "p1", // same author
         eventId: "e2",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
         head: "ア",
@@ -290,8 +290,8 @@ Deno.test("grantNicePassPoint", async (t) => {
       };
 
       const [pt] = grantHibernationBreakingPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -299,13 +299,13 @@ Deno.test("grantNicePassPoint", async (t) => {
   await t.step(
     "don't grant nice-pass point if last acceptance is not hibernation-breaking",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
-        hibernationBreaking: false, // not hibernation-breaking
+        hibernationBreaking: false, // last connection wasn't hibernation-breaking
       };
-      const newAcceptance = {
+      const newScp = {
         pubkey: "p2",
         eventId: "e2",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:05:00+09:00")),
@@ -314,8 +314,8 @@ Deno.test("grantNicePassPoint", async (t) => {
       };
 
       const [pt] = grantNicePassPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
@@ -323,23 +323,23 @@ Deno.test("grantNicePassPoint", async (t) => {
   await t.step(
     "don't grant nice-pass point if interval is above the threshold",
     () => {
-      const lastAcceptanceRec = {
+      const lastSc = {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
         hibernationBreaking: true,
       };
-      const newAcceptance = {
+      const newScp = {
         pubkey: "p2",
         eventId: "e2",
-        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:15:00+09:00")),
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:15:00+09:00")), // interval is too long
         head: "ア",
         last: "イ",
       };
 
       const [pt] = grantNicePassPoint(
-        lastAcceptanceRec,
-        newAcceptance,
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },

@@ -12,7 +12,7 @@ import rawAccountData from "./account_data.json" with { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { maskSecretsInEnvVars, parseEnvVars } from "./env.ts";
-import { launchEventAcceptanceHook } from "./rtp.ts";
+import { launchShiritoriConnectionHook } from "./ritrin_point.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData } from "./types.ts";
 
@@ -112,7 +112,7 @@ const main = async () => {
 
   // launch subsystems
   launchCmdChecker(env);
-  launchEventAcceptanceHook(env, writeRelays);
+  launchShiritoriConnectionHook(env, writeRelays);
   launchStatusUpdater(env, writeRelays);
 
   // setup handler for SIGTERM
