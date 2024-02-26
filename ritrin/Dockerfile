@@ -1,4 +1,4 @@
-FROM lukechannings/deno:v1.40.2
+FROM denoland/deno:distroless-1.41.0
 
 WORKDIR /app
 
