@@ -15,7 +15,12 @@ type LastShiritoriConnectionRecord = ShiritoriConnectedPost & {
   hibernationBreaking: boolean;
 };
 
-type RitrinPointType = "daily" | "hibernation-breaking" | "nice-pass";
+type RitrinPointType =
+  | "daily"
+  | "hibernation-breaking"
+  | "nice-pass"
+  | "special-connection";
+
 type RitrinPointTransaction = {
   type: RitrinPointType;
   amount: number;
@@ -28,6 +33,7 @@ const reactionContentForPointType: Record<RitrinPointType, string> = {
   daily: "🎁",
   "hibernation-breaking": "‼️",
   "nice-pass": "🙌",
+  "special-connection": "🫰",
 };
 
 export const launchShiritoriConnectionHook = (
@@ -90,21 +96,9 @@ export const launchShiritoriConnectionHook = (
   });
 };
 
-const isSpecialConnection = (prevLast: string, newHead: string) =>
-  [["ヴ", "ブ"], ["ヲ", "オ"], ["ヰ", "イ"], ["ヱ", "エ"]].some(([pl, nh]) =>
-    pl === prevLast && nh === newHead
-  );
-
 const nonPointReactionContent = (
-  prevConn: LastShiritoriConnectionRecord | undefined,
   newScp: ShiritoriConnectedPost,
 ): string => {
-  if (
-    prevConn !== undefined && isSpecialConnection(prevConn.last, newScp.head)
-  ) {
-    // special connection
-    return "🫰";
-  }
   if (newScp.last === "ン") {
     return "🤔";
   }
@@ -119,7 +113,7 @@ export const handleShiritoriConnection = async (
   newScp: ShiritoriConnectedPost,
   { env, writeRelayUrls, ritrinPointKv }: AppContext,
 ) => {
-  const { grantedPoints: rtps, prevConn } = await grantRitrinPoints(
+  const rtps = await grantRitrinPoints(
     ritrinPointKv,
     newScp,
   );
@@ -139,7 +133,7 @@ export const handleShiritoriConnection = async (
     })
     : [{
       kind: 7,
-      content: nonPointReactionContent(prevConn, newScp),
+      content: nonPointReactionContent(newScp),
       tags: [
         ["e", newScp.eventId, ""],
         ["p", newScp.pubkey, ""],
@@ -164,12 +158,7 @@ const lastShiritoriConnectionKey: Deno.KvKey = ["last_shiritori_connection"];
 const grantRitrinPoints = async (
   kv: Deno.Kv,
   newScp: ShiritoriConnectedPost,
-): Promise<
-  {
-    grantedPoints: RitrinPointTransaction[];
-    prevConn: LastShiritoriConnectionRecord | undefined;
-  }
-> => {
+): Promise<RitrinPointTransaction[]> => {
   const myLastAcceptedAtKey = lastShiritoriAcceptedAtPerAuthorKey(
     newScp.pubkey,
   );
@@ -192,6 +181,10 @@ const grantRitrinPoints = async (
         newScp,
         nicePassMaxIntervalSec,
       ),
+      ...grantSpecialConnectionPoint(
+        prevConnRecord.value,
+        newScp,
+      ),
     ];
     const hibernationBreaking = grantedPoints.some((b) =>
       b.type === "hibernation-breaking"
@@ -208,7 +201,7 @@ const grantRitrinPoints = async (
         newConnRecord,
       )
       .commit();
-    return { grantedPoints, prevConn: prevConnRecord.value ?? undefined };
+    return grantedPoints;
   }
   throw Error("grantRitrinPoints: unreachable");
 };
@@ -306,6 +299,35 @@ export const grantNicePassPoint = (
     type: "nice-pass",
     pubkey: prevSc.pubkey,
     eventId: prevSc.eventId,
+    amount: 1,
+    grantedAt: newScp.acceptedAt,
+  }];
+};
+
+const isSpecialConnection = (prevLast: string, newHead: string) =>
+  [["ヴ", "ブ"], ["ヲ", "オ"], ["ヰ", "イ"], ["ヱ", "エ"]].some(([pl, nh]) =>
+    pl === prevLast && nh === newHead
+  );
+
+export const grantSpecialConnectionPoint = (
+  prevSc: LastShiritoriConnectionRecord | null,
+  newScp: ShiritoriConnectedPost,
+): RitrinPointTransaction[] => {
+  if (prevSc === null) {
+    return [];
+  }
+  if (prevSc.pubkey === newScp.pubkey) {
+    // grant special-connection point only if authors of previous event and new event are different
+    return [];
+  }
+  if (!isSpecialConnection(prevSc.last, newScp.head)) {
+    return [];
+  }
+
+  return [{
+    type: "special-connection",
+    pubkey: newScp.pubkey,
+    eventId: newScp.eventId,
     amount: 1,
     grantedAt: newScp.acceptedAt,
   }];

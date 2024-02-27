@@ -7,6 +7,7 @@ import {
   grantDailyPoint,
   grantHibernationBreakingPoint,
   grantNicePassPoint,
+  grantSpecialConnectionPoint,
   unixDayJst,
 } from "./ritrin_point.ts";
 
@@ -104,6 +105,8 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: false,
       };
       const newScp = {
@@ -156,6 +159,8 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: false,
       };
       const newScp = {
@@ -181,6 +186,8 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: false,
       };
       const newScp = {
@@ -206,6 +213,8 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: false,
       };
       const newScp = {
@@ -234,6 +243,8 @@ Deno.test("grantNicePassPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: true, // last connection was hibernation-breaking
       };
       const newScp = {
@@ -286,6 +297,8 @@ Deno.test("grantNicePassPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: false,
       };
       const newScp = {
@@ -296,7 +309,7 @@ Deno.test("grantNicePassPoint", async (t) => {
         last: "イ",
       };
 
-      const [pt] = grantHibernationBreakingPoint(
+      const [pt] = grantNicePassPoint(
         lastSc,
         newScp,
         12 * 60 * 60,
@@ -311,6 +324,8 @@ Deno.test("grantNicePassPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: false, // last connection wasn't hibernation-breaking
       };
       const newScp = {
@@ -336,6 +351,8 @@ Deno.test("grantNicePassPoint", async (t) => {
         pubkey: "p1",
         eventId: "e1",
         acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
         hibernationBreaking: true,
       };
       const newScp = {
@@ -350,6 +367,122 @@ Deno.test("grantNicePassPoint", async (t) => {
         lastSc,
         newScp,
         10 * 60,
+      );
+      assert(pt === undefined, "pt should be undefined");
+    },
+  );
+});
+
+Deno.test("grantSpecialConnectionPoint", async (t) => {
+  await t.step(
+    "grant special-connection point if all conditions meet",
+    () => {
+      for (
+        const [prevLast, newHead] of [
+          ["ヴ", "ブ"],
+          ["ヲ", "オ"],
+          ["ヰ", "イ"],
+          ["ヱ", "エ"],
+        ]
+      ) {
+        const lastSc = {
+          pubkey: "p1",
+          eventId: "e1",
+          acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+          head: "ア",
+          last: prevLast,
+          hibernationBreaking: true, // last connection was hibernation-breaking
+        };
+        const newScp = {
+          pubkey: "p2", // author is different
+          eventId: "e2",
+          acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:05:00+09:00")), // interval is short enough
+          head: newHead,
+          last: "イ",
+        };
+
+        const [pt] = grantSpecialConnectionPoint(
+          lastSc,
+          newScp,
+        );
+        assert(pt !== undefined, "pt should not be undefined");
+        assertEquals(pt, {
+          type: "special-connection",
+          amount: 1,
+          pubkey: "p2",
+          eventId: "e2",
+          grantedAt: newScp.acceptedAt,
+        });
+      }
+    },
+  );
+  await t.step(
+    "don't grant special-connection point if connection is not special",
+    () => {
+      const lastSc = {
+        pubkey: "p1",
+        eventId: "e1",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
+        hibernationBreaking: true, // last connection was hibernation-breaking
+      };
+      const newScp = {
+        pubkey: "p2", // author is different
+        eventId: "e2",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:05:00+09:00")), // interval is short enough
+        head: "ア",
+        last: "イ",
+      };
+
+      const [pt] = grantSpecialConnectionPoint(
+        lastSc,
+        newScp,
+      );
+      assert(pt === undefined, "pt should be undefined");
+    },
+  );
+  await t.step(
+    "don't grant special-connection point if lastSc is null",
+    () => {
+      const lastSc = null; // no last acceptance
+      const newScp = {
+        pubkey: "p2",
+        eventId: "e2",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:05:00+09:00")),
+        head: "ア",
+        last: "イ",
+      };
+
+      const [pt] = grantSpecialConnectionPoint(
+        lastSc,
+        newScp,
+      );
+      assert(pt === undefined, "pt should be undefined");
+    },
+  );
+  await t.step(
+    "don't grant special-connection point if authors of two events are same",
+    () => {
+      const lastSc = {
+        pubkey: "p1",
+        eventId: "e1",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T00:00:00+09:00")),
+        head: "ア",
+        last: "ア",
+        hibernationBreaking: false,
+      };
+      const newScp = {
+        pubkey: "p1", // same author
+        eventId: "e2",
+        acceptedAt: dateToUnixtimeSec(new Date("2024-02-14T15:00:00+09:00")),
+        head: "ア",
+        last: "イ",
+      };
+
+      const [pt] = grantSpecialConnectionPoint(
+        lastSc,
+        newScp,
       );
       assert(pt === undefined, "pt should be undefined");
     },
