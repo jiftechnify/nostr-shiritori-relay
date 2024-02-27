@@ -31,9 +31,13 @@ type RitrinPointTransaction = {
   grantedAt: number;
 };
 
-type ExtraPointType = Exclude<RitrinPointType, "shiritori">;
+type BonusPointType = Exclude<RitrinPointType, "shiritori">;
+type BonusPointTransaction = RitrinPointTransaction & { type: BonusPointType };
+const isBonusPoint = (
+  rtp: RitrinPointTransaction,
+): rtp is BonusPointTransaction => rtp.type !== "shiritori";
 
-const reactionContentForExtraPointType: Record<ExtraPointType, string> = {
+const reactionContentForBonusPointType: Record<BonusPointType, string> = {
   daily: "🎁",
   "hibernation-breaking": "‼️",
   "nice-pass": "🙌",
@@ -79,16 +83,12 @@ export const launchShiritoriConnectionHook = (
       );
 
       try {
-        await handleShiritoriConnection(
-          scp,
-          appCtx,
-        );
+        await handleShiritoriConnection(scp, appCtx);
       } catch (err) {
         log.error(
           `error while handling shiritori connected post connection: ${err}`,
         );
       }
-
       conn.close();
     }
   };
@@ -123,11 +123,11 @@ export const handleShiritoriConnection = async (
   );
   await saveRitrinPointTxs(ritrinPointKv, rtps);
 
-  const reactions = rtps.filter((rtp) => rtp.type !== "shiritori").map(
+  const reactions = rtps.filter(isBonusPoint).map(
     ({ type, eventId, pubkey }) => {
       return {
         kind: 7,
-        content: reactionContentForExtraPointType[type as ExtraPointType],
+        content: reactionContentForBonusPointType[type],
         tags: [
           ["e", eventId, ""],
           ["p", pubkey, ""],
@@ -136,7 +136,7 @@ export const handleShiritoriConnection = async (
       };
     },
   );
-  // if no extra points granted, send default shiritori reaction
+  // if no bonus points granted, send default shiritori reaction
   if (reactions.length === 0) {
     reactions.push({
       kind: 7,
@@ -204,6 +204,7 @@ const grantRitrinPoints = async (
   throw Error("grantRitrinPoints: unreachable");
 };
 
+/* basic shiritori point */
 const grantShiritoriPoint = (
   prevSc: LastShiritoriConnectionRecord | null,
   newScp: ShiritoriConnectedPost,
@@ -221,10 +222,12 @@ const grantShiritoriPoint = (
   }];
 };
 
+/* daily bonus point */
 export const unixDayJst = (unixtimeSec: number) =>
   Math.floor((unixtimeSec + 9 * 3600) / (24 * 3600));
 
 const dailyPointAmount = 10;
+
 export const grantDailyPoint = (
   lastAcceptedAt: number | null,
   newScp: ShiritoriConnectedPost,
@@ -247,6 +250,7 @@ export const grantDailyPoint = (
   ];
 };
 
+/* bonus point for hibernation-breaking post */
 // threshold of considering inactivity as "hibernation": 1 hour
 const hibernationMinIntervalSec = 1 * 60 * 60;
 const hibernationBreakingPointMax = 10;
@@ -293,6 +297,7 @@ export const grantHibernationBreakingPoint = (
   }];
 };
 
+/* bonus point for nice-pass post */
 // threshold of "shortness" of consecutive shiritori connection span: 5 minutes
 // in this case, preceding connection considered as "nice pass"
 const nicePassMaxIntervalSec = 5 * 60;
@@ -335,6 +340,7 @@ export const grantNicePassPoint = (
   }];
 };
 
+/* bonus point for special shiritori connection  */
 const isSpecialConnection = (prevLast: string, newHead: string) =>
   [["ヴ", "ブ"], ["ヲ", "オ"], ["ヰ", "イ"], ["ヱ", "エ"]].some(([pl, nh]) =>
     pl === prevLast && nh === newHead
