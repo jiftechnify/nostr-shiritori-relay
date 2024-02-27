@@ -2,6 +2,7 @@ import * as log from "std/log";
 import * as path from "std/path";
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { AppContext } from "./context.ts";
+import { ulid } from "ulid";
 
 type ShiritoriConnectedPost = {
   pubkey: string;
@@ -333,19 +334,35 @@ export const grantSpecialConnectionPoint = (
   }];
 };
 
-const ritrinPointTxKey = (
+const ulidFromUnixtimeSec = (unixtimeSec: number) => ulid(unixtimeSec * 1000);
+
+const ritrinPointTxPK = (
+  ulid: string,
+): Deno.KvKey => ["ritrin_point_tx", ulid];
+
+const ritrinPointTxSKByPubkey = (
   pubkey: string,
-  grantedAt: number,
-  pointType: RitrinPointType,
-): Deno.KvKey => ["point_transaction", pubkey, grantedAt, pointType];
+  ulid: string,
+): Deno.KvKey => ["ritrin_point_tx_by_pubkey", pubkey, ulid];
+
+const ritrinPointTxKeys = (
+  tx: RitrinPointTransaction,
+): { pk: Deno.KvKey; skByPubkey: Deno.KvKey } => {
+  const ulid = ulidFromUnixtimeSec(tx.grantedAt);
+  return {
+    pk: ritrinPointTxPK(ulid),
+    skByPubkey: ritrinPointTxSKByPubkey(tx.pubkey, ulid),
+  };
+};
 
 const saveRitrinPointTxs = async (
   kv: Deno.Kv,
   txs: RitrinPointTransaction[],
 ) => {
   const jobs = txs.map(async (tx) => {
-    const key = ritrinPointTxKey(tx.pubkey, tx.grantedAt, tx.type);
-    await kv.set(key, tx);
+    const { pk, skByPubkey } = ritrinPointTxKeys(tx);
+    await kv.set(pk, tx);
+    await kv.set(skByPubkey, tx);
     log.info(`granted ritrin point: ${JSON.stringify(tx)}`);
   });
   await Promise.all(jobs);

@@ -4,7 +4,8 @@
     "specifiers": {
       "npm:nostr-tools@1.17.0": "npm:nostr-tools@1.17.0",
       "npm:rx-nostr@1.8.1": "npm:rx-nostr@1.8.1",
-      "npm:rxjs@7.8.1": "npm:rxjs@7.8.1"
+      "npm:rxjs@7.8.1": "npm:rxjs@7.8.1",
+      "npm:ulidx@2.3.0": "npm:ulidx@2.3.0"
     },
     "npm": {
       "@noble/ciphers@0.2.0": {
@@ -39,6 +40,10 @@
           "@noble/hashes": "@noble/hashes@1.3.1",
           "@scure/base": "@scure/base@1.1.1"
         }
+      },
+      "layerr@2.0.1": {
+        "integrity": "sha512-z0730CwG/JO24evdORnyDkwG1Q7b7mF2Tp1qRQ0YvrMMARbt1DFG694SOv439Gm7hYKolyZyaB49YIrYIfZBdg==",
+        "dependencies": {}
       },
       "normalize-url@8.0.0": {
         "integrity": "sha512-uVFpKhj5MheNBJRTiMZ9pE/7hD1QTeEvugSJW/OmLzAp78PB5O6adfMNTvmfKhXBkvCzC+rqifWcVYpGFwTjnw==",
@@ -79,6 +84,12 @@
       "tslib@2.6.2": {
         "integrity": "sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==",
         "dependencies": {}
+      },
+      "ulidx@2.3.0": {
+        "integrity": "sha512-36piWNqcdp9hKlQewyeehCaALy4lyx3FodsCxHuV6i0YdexSkjDOubwxEVr2yi4kh62L/0MgyrxqG4K+qtovnw==",
+        "dependencies": {
+          "layerr": "layerr@2.0.1"
+        }
       }
     }
   },
@@ -226,7 +237,8 @@
     "dependencies": [
       "npm:nostr-tools@1.17.0",
       "npm:rx-nostr@1.8.1",
-      "npm:rxjs@7.8.1"
+      "npm:rxjs@7.8.1",
+      "npm:ulidx@2.3.0"
     ]
   }
 }
