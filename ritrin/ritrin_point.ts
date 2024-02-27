@@ -11,10 +11,7 @@ type ShiritoriConnectedPost = {
   acceptedAt: number;
 };
 
-type LastShiritoriConnectionRecord = {
-  pubkey: string;
-  eventId: string;
-  acceptedAt: number;
+type LastShiritoriConnectionRecord = ShiritoriConnectedPost & {
   hibernationBreaking: boolean;
 };
 
@@ -93,11 +90,39 @@ export const launchShiritoriConnectionHook = (
   });
 };
 
+const isSpecialConnection = (prevLast: string, newHead: string) =>
+  [["ヴ", "ブ"], ["ヲ", "オ"], ["ヰ", "イ"], ["ヱ", "エ"]].some(([pl, nh]) =>
+    pl === prevLast && nh === newHead
+  );
+
+const nonPointReactionContent = (
+  prevConn: LastShiritoriConnectionRecord | undefined,
+  newScp: ShiritoriConnectedPost,
+): string => {
+  if (
+    prevConn !== undefined && isSpecialConnection(prevConn.last, newScp.head)
+  ) {
+    // special connection
+    return "🫰";
+  }
+  if (newScp.last === "ン") {
+    return "🤔";
+  }
+  if (newScp.head === "ン") {
+    return "🥳";
+  }
+  // white: last kana not changed, red: last kana changed
+  return newScp.head === newScp.last ? "❕" : "❗";
+};
+
 export const handleShiritoriConnection = async (
   newScp: ShiritoriConnectedPost,
   { env, writeRelayUrls, ritrinPointKv }: AppContext,
 ) => {
-  const rtps = await grantRitrinPoints(ritrinPointKv, newScp);
+  const { grantedPoints: rtps, prevConn } = await grantRitrinPoints(
+    ritrinPointKv,
+    newScp,
+  );
   await saveRitrinPointTxs(ritrinPointKv, rtps);
 
   const reactions = rtps.length > 0
@@ -114,8 +139,7 @@ export const handleShiritoriConnection = async (
     })
     : [{
       kind: 7,
-      // white: last kana not changed, red: last kana changed
-      content: newScp.head === newScp.last ? "❕" : "❗",
+      content: nonPointReactionContent(prevConn, newScp),
       tags: [
         ["e", newScp.eventId, ""],
         ["p", newScp.pubkey, ""],
@@ -140,26 +164,31 @@ const lastShiritoriConnectionKey: Deno.KvKey = ["last_shiritori_connection"];
 const grantRitrinPoints = async (
   kv: Deno.Kv,
   newScp: ShiritoriConnectedPost,
-): Promise<RitrinPointTransaction[]> => {
+): Promise<
+  {
+    grantedPoints: RitrinPointTransaction[];
+    prevConn: LastShiritoriConnectionRecord | undefined;
+  }
+> => {
   const myLastAcceptedAtKey = lastShiritoriAcceptedAtPerAuthorKey(
     newScp.pubkey,
   );
 
   let res = { ok: false };
   while (!res.ok) {
-    const [myLastConnectedAt, lastConnection] = await kv.getMany<
+    const [myLastConnectedAt, prevConnRecord] = await kv.getMany<
       [number, LastShiritoriConnectionRecord]
     >([myLastAcceptedAtKey, lastShiritoriConnectionKey]);
 
     const grantedPoints = [
       ...grantDailyPoint(myLastConnectedAt.value, newScp),
       ...grantHibernationBreakingPoint(
-        lastConnection.value,
+        prevConnRecord.value,
         newScp,
         hibernationMinIntervalSec,
       ),
       ...grantNicePassPoint(
-        lastConnection.value,
+        prevConnRecord.value,
         newScp,
         nicePassMaxIntervalSec,
       ),
@@ -168,23 +197,20 @@ const grantRitrinPoints = async (
       b.type === "hibernation-breaking"
     );
 
-    const newConnection: LastShiritoriConnectionRecord = {
-      pubkey: newScp.pubkey,
-      eventId: newScp.eventId,
-      acceptedAt: newScp.acceptedAt,
+    const newConnRecord: LastShiritoriConnectionRecord = {
+      ...newScp,
       hibernationBreaking,
     };
-    res = await kv.atomic().check(myLastConnectedAt).check(lastConnection)
+    res = await kv.atomic().check(myLastConnectedAt).check(prevConnRecord)
       .set(myLastAcceptedAtKey, newScp.acceptedAt)
       .set(
         lastShiritoriConnectionKey,
-        newConnection,
+        newConnRecord,
       )
       .commit();
-    return grantedPoints;
+    return { grantedPoints, prevConn: prevConnRecord.value ?? undefined };
   }
-  console.error("unreachable");
-  return [];
+  throw Error("grantRitrinPoints: unreachable");
 };
 
 export const unixDayJst = (unixtimeSec: number) =>
@@ -217,14 +243,14 @@ export const grantDailyPoint = (
 const hibernationMinIntervalSec = 12 * 60 * 60;
 
 export const grantHibernationBreakingPoint = (
-  lastSc: LastShiritoriConnectionRecord | null,
+  prevSc: LastShiritoriConnectionRecord | null,
   newScp: ShiritoriConnectedPost,
   minIntervalSec: number,
 ): RitrinPointTransaction[] => {
-  if (lastSc === null) {
+  if (prevSc === null) {
     return [];
   }
-  if (lastSc.pubkey === newScp.pubkey) {
+  if (prevSc.pubkey === newScp.pubkey) {
     // grant hibernation-breaking point only if new event's author is different than prev event' author
     return [];
   }
@@ -233,7 +259,7 @@ export const grantHibernationBreakingPoint = (
     return [];
   }
   if (
-    newScp.acceptedAt - lastSc.acceptedAt <
+    newScp.acceptedAt - prevSc.acceptedAt <
       minIntervalSec
   ) {
     return [];
@@ -254,23 +280,23 @@ export const grantHibernationBreakingPoint = (
 const nicePassMaxIntervalSec = 10 * 60;
 
 export const grantNicePassPoint = (
-  lastSc: LastShiritoriConnectionRecord | null,
+  prevSc: LastShiritoriConnectionRecord | null,
   newScp: ShiritoriConnectedPost,
   maxIntervalSec: number,
 ): RitrinPointTransaction[] => {
-  if (lastSc === null) {
+  if (prevSc === null) {
     return [];
   }
-  if (lastSc.pubkey === newScp.pubkey) {
+  if (prevSc.pubkey === newScp.pubkey) {
     // grant nice-pass point only if authors of previous event and new event are different
     return [];
   }
-  if (!lastSc.hibernationBreaking) {
+  if (!prevSc.hibernationBreaking) {
     // grant nice-pass point only if the previous connection is hibernation-breaking
     return [];
   }
   if (
-    newScp.acceptedAt - lastSc.acceptedAt >
+    newScp.acceptedAt - prevSc.acceptedAt >
       maxIntervalSec
   ) {
     return [];
@@ -278,8 +304,8 @@ export const grantNicePassPoint = (
 
   return [{
     type: "nice-pass",
-    pubkey: lastSc.pubkey,
-    eventId: lastSc.eventId,
+    pubkey: prevSc.pubkey,
+    eventId: prevSc.eventId,
     amount: 1,
     grantedAt: newScp.acceptedAt,
   }];
