@@ -1,161 +1,8 @@
-import * as log from "std/log";
-import * as path from "std/path";
-import { currUnixtime, publishToRelays } from "./common.ts";
-import { AppContext } from "./context.ts";
-import { ulid } from "ulid";
-
-type ShiritoriConnectedPost = {
-  pubkey: string;
-  eventId: string;
-  head: string;
-  last: string;
-  acceptedAt: number;
-};
-
-type LastShiritoriConnectionRecord = ShiritoriConnectedPost & {
-  hibernationBreaking: boolean;
-};
-
-type RitrinPointType =
-  | "shiritori"
-  | "daily"
-  | "hibernation-breaking"
-  | "nice-pass"
-  | "special-connection";
-
-type RitrinPointTransaction = {
-  type: RitrinPointType;
-  amount: number;
-  pubkey: string;
-  eventId: string;
-  grantedAt: number;
-};
-
-type BonusPointType = Exclude<RitrinPointType, "shiritori">;
-type BonusPointTransaction = RitrinPointTransaction & { type: BonusPointType };
-const isBonusPoint = (
-  rtp: RitrinPointTransaction,
-): rtp is BonusPointTransaction => rtp.type !== "shiritori";
-
-const reactionContentForBonusPointType: Record<BonusPointType, string> = {
-  daily: "🎁",
-  "hibernation-breaking": "‼️",
-  "nice-pass": "🙌",
-  "special-connection": "🫰",
-};
-
-export const launchShiritoriConnectionHook = (
-  appCtx: AppContext,
-) => {
-  const serve = async () => {
-    const sockPath = path.join(
-      appCtx.env.RESOURCE_DIR,
-      "shiritori_connection_hook.sock",
-    );
-    try {
-      Deno.removeSync(sockPath);
-    } catch (err) {
-      if (!(err instanceof Deno.errors.NotFound)) {
-        log.error(`failed to remove unix socket: ${err}`);
-        Deno.exit(1);
-      }
-    }
-
-    const listener = Deno.listen({ transport: "unix", path: sockPath });
-    while (true) {
-      const conn = await listener.accept();
-      const buf = new Uint8Array(1024);
-      const n = await conn.read(buf);
-
-      const reqTxt = new TextDecoder().decode(
-        n === null ? buf : buf.slice(0, n),
-      );
-      const scp = JSON.parse(reqTxt) as ShiritoriConnectedPost;
-
-      if (n === null) {
-        log.error("failed to read from connection");
-        conn.close();
-        continue;
-      }
-
-      log.info(
-        `received shiritori connected post: ${JSON.stringify(scp)}`,
-      );
-
-      try {
-        await handleShiritoriConnection(scp, appCtx);
-      } catch (err) {
-        log.error(
-          `error while handling shiritori connected post connection: ${err}`,
-        );
-      }
-      conn.close();
-    }
-  };
-
-  log.info("launching shiritori connection hook...");
-  serve().catch((err) => {
-    log.error(`error while launching shiritori connection hook: ${err}`);
-    Deno.exit(1);
-  });
-};
-
-const shiritoriReactionContent = (
-  newScp: ShiritoriConnectedPost,
-): string => {
-  if (newScp.last === "ン") {
-    return "🤔";
-  }
-  if (newScp.head === "ン") {
-    return "🥳";
-  }
-  // white: last kana not changed, red: last kana changed
-  return newScp.head === newScp.last ? "❕" : "❗";
-};
-
-export const handleShiritoriConnection = async (
-  newScp: ShiritoriConnectedPost,
-  { env, writeRelayUrls, ritrinPointKv }: AppContext,
-) => {
-  const rtps = await grantRitrinPoints(
-    ritrinPointKv,
-    newScp,
-  );
-  await saveRitrinPointTxs(ritrinPointKv, rtps);
-
-  const reactions = rtps.filter(isBonusPoint).map(
-    ({ type, eventId, pubkey }) => {
-      return {
-        kind: 7,
-        content: reactionContentForBonusPointType[type],
-        tags: [
-          ["e", eventId, ""],
-          ["p", pubkey, ""],
-        ],
-        created_at: currUnixtime(),
-      };
-    },
-  );
-  // if no bonus points granted, send default shiritori reaction
-  if (reactions.length === 0) {
-    reactions.push({
-      kind: 7,
-      content: shiritoriReactionContent(newScp),
-      tags: [
-        ["e", newScp.eventId, ""],
-        ["p", newScp.pubkey, ""],
-      ],
-      created_at: currUnixtime(),
-    });
-  }
-
-  // send reactions to accepted / nice-pass posts
-  await Promise.all(
-    reactions.map((k7) =>
-      publishToRelays(writeRelayUrls, k7, env.RITRIN_PRIVATE_KEY)
-    ),
-  );
-};
+import {
+  LastShiritoriConnectionRecord,
+  RitrinPointTransaction,
+  ShiritoriConnectedPost,
+} from "./model.ts";
 
 const lastShiritoriAcceptedAtPerAuthorKey = (
   author: string,
@@ -163,7 +10,10 @@ const lastShiritoriAcceptedAtPerAuthorKey = (
 
 const lastShiritoriConnectionKey: Deno.KvKey = ["last_shiritori_connection"];
 
-const grantRitrinPoints = async (
+/**
+ * grants ritrin points to the shiritori-connected post, and update internal states
+ */
+export const grantRitrinPoints = async (
   kv: Deno.Kv,
   newScp: ShiritoriConnectedPost,
 ): Promise<RitrinPointTransaction[]> => {
@@ -205,7 +55,7 @@ const grantRitrinPoints = async (
 };
 
 /* basic shiritori point */
-const grantShiritoriPoint = (
+export const grantShiritoriPoint = (
   prevSc: LastShiritoriConnectionRecord | null,
   newScp: ShiritoriConnectedPost,
 ): RitrinPointTransaction[] => {
@@ -369,38 +219,4 @@ export const grantSpecialConnectionPoint = (
     amount: specialConnectionPointAmount,
     grantedAt: newScp.acceptedAt,
   }];
-};
-
-const ulidFromUnixtimeSec = (unixtimeSec: number) => ulid(unixtimeSec * 1000);
-
-const ritrinPointTxPK = (
-  ulid: string,
-): Deno.KvKey => ["ritrin_point_tx", ulid];
-
-const ritrinPointTxSKByPubkey = (
-  pubkey: string,
-  ulid: string,
-): Deno.KvKey => ["ritrin_point_tx_by_pubkey", pubkey, ulid];
-
-const ritrinPointTxKeys = (
-  tx: RitrinPointTransaction,
-): { pk: Deno.KvKey; skByPubkey: Deno.KvKey } => {
-  const ulid = ulidFromUnixtimeSec(tx.grantedAt);
-  return {
-    pk: ritrinPointTxPK(ulid),
-    skByPubkey: ritrinPointTxSKByPubkey(tx.pubkey, ulid),
-  };
-};
-
-const saveRitrinPointTxs = async (
-  kv: Deno.Kv,
-  txs: RitrinPointTransaction[],
-) => {
-  const jobs = txs.map(async (tx) => {
-    const { pk, skByPubkey } = ritrinPointTxKeys(tx);
-    await kv.set(pk, tx);
-    await kv.set(skByPubkey, tx);
-    log.info(`granted ritrin point: ${JSON.stringify(tx)}`);
-  });
-  await Promise.all(jobs);
 };

@@ -235,6 +235,7 @@
   },
   "workspace": {
     "dependencies": [
+      "npm:date-fns@3.3.1",
       "npm:nostr-tools@1.17.0",
       "npm:rx-nostr@1.8.1",
       "npm:rxjs@7.8.1",

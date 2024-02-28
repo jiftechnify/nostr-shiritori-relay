@@ -9,7 +9,7 @@ import {
   grantNicePassPoint,
   grantSpecialConnectionPoint,
   unixDayJst,
-} from "./ritrin_point.ts";
+} from "./grant.ts";
 
 const dateToUnixtimeSec = (date: Date) => Math.floor(date.getTime() / 1000);
 
