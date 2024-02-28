@@ -14,7 +14,8 @@
     "date-fns": "npm:date-fns@3.3.1"
   },
   "tasks": {
-    "start": "deno run -A --unstable main.ts",
-    "set-data": "deno run -A set_account_data.ts"
+    "start": "deno run -A --unstable-kv --unstable-temporal main.ts",
+    "set-data": "deno run -A set_account_data.ts",
+    "rtp-inspect": "deno run -A --unstable-kv --unstable-temporal rtp_inspect.ts"
   }
 }

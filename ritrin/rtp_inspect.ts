@@ -11,16 +11,29 @@ type LastShiritoriConnectionRecord = {
   hibernationBreaking: boolean;
 };
 
-if (import.meta.main) {
-  console.log(Deno.args);
+const usage = `Usage: deno task rtp-inspect <command> [args...]
 
+Commands:
+
+  last-accepted <pubkey>         Show the last shiritori accepted time of the pubkey
+  last-srtr-conn                 Show the last shiritori connection record
+  point-txs <pubkey> [date-str]  Show all the point transactions of the pubkey.
+                                 If date-str is given, show the transactions of the date.
+`;
+
+const showUsageAndExit = () => {
+  console.log(usage);
+  Deno.exit(1);
+};
+
+if (import.meta.main) {
   const kv = await Deno.openKv("../resource/rtp.db");
 
   switch (Deno.args[0]) {
     case "last-accepted": {
       if (Deno.args[1] === undefined) {
         console.error("missing pubkey");
-        Deno.exit(1);
+        showUsageAndExit();
       }
       const res = await kv.get<number>(
         lastShiritoriAcceptedAtPerAuthorKey(Deno.args[1]),
@@ -42,14 +55,28 @@ if (import.meta.main) {
     case "point-txs": {
       if (Deno.args[1] === undefined) {
         console.error("missing pubkey");
-        Deno.exit(1);
+        showUsageAndExit();
       }
+      const [pubkey, dateStr] = Deno.args.slice(1);
       const rtpTxRepo = new RitrinPointTxRepo(kv);
-      const txs = await rtpTxRepo.findAllByPubkey(Deno.args[1]);
+      const txs = dateStr
+        ? await rtpTxRepo.findAllByPubkeyWithinDay(pubkey, dateStr)
+        : await rtpTxRepo.findAllByPubkey(pubkey);
+
+      if (txs.length === 0) {
+        console.log("no records found")
+	break;
+      }
+      console.log(`${txs.length} records found`)
       for (const tx of txs) {
         console.log(tx);
       }
       break;
     }
+    default: {
+      console.error("unknown command");
+      showUsageAndExit();
+    }
   }
 }
+
