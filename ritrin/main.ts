@@ -13,7 +13,7 @@ import rawAccountData from "./account_data.json" with { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { AppContext, maskSecretsInEnvVars, parseEnvVars } from "./context.ts";
-import { launchShiritoriConnectionHook } from "./ritrin_point.ts";
+import { launchShiritoriConnectionHook } from "./ritrin_point/handler.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData } from "./types.ts";
 
