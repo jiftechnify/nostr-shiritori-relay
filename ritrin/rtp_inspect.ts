@@ -1,12 +1,8 @@
-const lastShiritoriAcceptedAtPerAuthorKey = (
-  author: string,
-): Deno.KvKey => ["last_accepted_at", author];
-
-const lastShiritoriConnectionKey: Deno.KvKey = ["last_shiritori_connection"];
-
-const ritrinPointTxsForPubkey = (
-  pubkey: string,
-): Deno.KvKey => ["point_transaction", pubkey];
+import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
+import {
+  lastShiritoriAcceptedAtPerAuthorKey,
+  lastShiritoriConnectionKey,
+} from "./ritrin_point/grant.ts";
 
 type LastShiritoriConnectionRecord = {
   pubkey: string;
@@ -48,9 +44,9 @@ if (import.meta.main) {
         console.error("missing pubkey");
         Deno.exit(1);
       }
-      for await (
-        const tx of kv.list({ prefix: ritrinPointTxsForPubkey(Deno.args[1]) })
-      ) {
+      const rtpTxRepo = new RitrinPointTxRepo(kv);
+      const txs = await rtpTxRepo.findAllByPubkey(Deno.args[1]);
+      for (const tx of txs) {
         console.log(tx);
       }
       break;

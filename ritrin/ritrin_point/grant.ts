@@ -4,11 +4,13 @@ import {
   ShiritoriConnectedPost,
 } from "./model.ts";
 
-const lastShiritoriAcceptedAtPerAuthorKey = (
+export const lastShiritoriAcceptedAtPerAuthorKey = (
   author: string,
 ): Deno.KvKey => ["last_accepted_at", author];
 
-const lastShiritoriConnectionKey: Deno.KvKey = ["last_shiritori_connection"];
+export const lastShiritoriConnectionKey: Deno.KvKey = [
+  "last_shiritori_connection",
+];
 
 /**
  * grants ritrin points to the shiritori-connected post, and update internal states
