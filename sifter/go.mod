@@ -3,7 +3,7 @@ module shiritori-relay-evsifter
 go 1.21.3
 
 require (
-	github.com/jiftechnify/strfrui v0.1.0
+	github.com/jiftechnify/strfrui v0.1.1
 	github.com/nbd-wtf/go-nostr v0.24.2
 )
 

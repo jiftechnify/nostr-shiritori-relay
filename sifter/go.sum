@@ -64,8 +64,8 @@ github.com/google/go-cmp v0.4.0/go.mod h1:v8dTdLbMG2kIc/vJvl+f65V22dbkXbowE6jgT/
 github.com/hpcloud/tail v1.0.0/go.mod h1:ab1qPbhIpdTxEkNHXyeSf5vhxWSCs/tWer42PpOxQnU=
 github.com/jessevdk/go-flags v0.0.0-20141203071132-1679536dcc89/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
-github.com/jiftechnify/strfrui v0.1.0 h1:a87Hrfhc/cCX7FLbPIxCLKc2ewBAKEPZYY5tK3NiOEQ=
-github.com/jiftechnify/strfrui v0.1.0/go.mod h1:iXot3KlbewGU0ngRVg0P+TWN8BTS9qCIaSh+0IUYIz0=
+github.com/jiftechnify/strfrui v0.1.1 h1:Ztekf0It32xQ6TVKlWoXkH+XTMPdb4lQOCdo9V7LhKY=
+github.com/jiftechnify/strfrui v0.1.1/go.mod h1:iXot3KlbewGU0ngRVg0P+TWN8BTS9qCIaSh+0IUYIz0=
 github.com/josharian/intern v1.0.0 h1:vlS4z54oSdjm0bgjRigI+G1HpF+tI+9rE5LLzOg8HmY=
 github.com/josharian/intern v1.0.0/go.mod h1:5DoeVV0s6jJacbCEi61lwdGj/aVlrQvzHFFd8Hwg//Y=
 github.com/jrick/logrotate v1.0.0/go.mod h1:LNinyqDIJnpAur+b8yyulnQw/wDuN1+BYKlTRt3OuAQ=
