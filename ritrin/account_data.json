@@ -18,17 +18,22 @@
       "write": true
     },
     {
-      "url": "wss://relay-jp.nostr.wirednet.jp",
-      "read": false,
+      "url": "wss://nrelay.c-stellar.net",
+      "read": true,
       "write": true
     },
     {
-      "url": "wss://nostr.holybea.com",
-      "read": false,
-      "write": true
+      "url": "wss://yabu.me",
+      "read": true,
+      "write": false
     },
     {
       "url": "wss://nrelay-jp.c-stellar.net",
+      "read": false,
+      "write": true
+    },
+    {
+      "url": "wss://relay-jp.nostr.wirednet.jp",
       "read": false,
       "write": true
     },

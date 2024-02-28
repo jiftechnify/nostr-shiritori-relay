@@ -15,7 +15,7 @@ import { currUnixtime, publishToRelays } from "./common.ts";
 import { AppContext, maskSecretsInEnvVars, parseEnvVars } from "./context.ts";
 import { launchShiritoriConnectionHook } from "./ritrin_point/handler.ts";
 import { launchStatusUpdater } from "./set_status.ts";
-import { AccountData } from "./types.ts";
+import { AccountData, NostrEventUnsigned } from "./types.ts";
 
 const main = async () => {
   log.setup({
@@ -52,56 +52,66 @@ const main = async () => {
   const botPubkey = getPublicKey(env.RITRIN_PRIVATE_KEY);
 
   const rxn = createRxNostr();
-  await rxn.switchRelays([env.SRTRELAY_URL]);
+  rxn.setDefaultRelays((rawAccountData as AccountData).relays);
 
-  // force reconnect if no post received for 10 minutes
-  let forceReconnectTimer: number | undefined;
-  const scheduleForceReconnect = () => {
-    if (forceReconnectTimer !== undefined) {
-      clearTimeout(forceReconnectTimer);
-    }
-    forceReconnectTimer = setTimeout(async () => {
-      log.warning("force reconnect to srtrelay");
-      await rxn.removeRelay(env.SRTRELAY_URL);
-      await rxn.addRelay(env.SRTRELAY_URL);
-      scheduleForceReconnect();
-    }, 10 * 60 * 1000);
-  };
-
-  // main logic: subscribe to posts on srtrelay and react to them
+  // main logic: subscribe to posts on relays and react to them
+  const ritrinCallRegexp = /^りっ*とり[ー〜]*ん.*$/;
   const req = createRxForwardReq();
   rxn
     .use(req)
     .pipe(
       verify(),
       uniq(),
-      filter(({ event }) =>
-        event.pubkey !== botPubkey && event.content.startsWith("!")
-      ),
+      filter(({ event }) => event.pubkey !== botPubkey),
     )
     .subscribe(async ({ event }) => {
-      // handle commands
-      const res = await handleCommand(event, env);
-      for (const e of res) {
-        rxn.send(e, { seckey: env.RITRIN_PRIVATE_KEY });
+      if (event.content.startsWith("!")) {
+        // handle commands
+        const res = await handleCommand(event, env);
+        for (const e of res) {
+          rxn.send(e, { seckey: env.RITRIN_PRIVATE_KEY });
+        }
+        return;
       }
-      // schedule force reconnect every time post received
-      scheduleForceReconnect();
+      if (ritrinCallRegexp.test(event.content)) {
+        // respond to "りとりん" call with reaction
+        log.info(`Ritrin called: ${event.content} (id: ${event.id})`);
+        const resp: NostrEventUnsigned = {
+          kind: 7,
+          content: ":ritrin:",
+          tags: [
+            ["p", event.pubkey, ""],
+            ["e", event.id, ""],
+            [
+              "emoji",
+              "ritrin",
+              "https://pubimgs.c-stellar.net/ritrin1_r.webp",
+            ],
+          ],
+          created_at: currUnixtime(),
+        };
+        rxn.send(resp, { seckey: env.RITRIN_PRIVATE_KEY });
+        return;
+      }
     });
   req.emit({ kinds: [1], limit: 0 });
 
-  // monitor relay connection state
+  // monitor relay connection state, and recoonect on error
   const onConnStateChange = ({ from, state }: ConnectionStatePacket) => {
     switch (state) {
-      case "ongoing":
+      case "connecting":
+      case "connected":
+      case "dormant":
         log.info(`[${from}] connection state: ${state}`);
         break;
-      case "reconnecting":
+      case "waiting-for-retrying":
+      case "retrying":
         log.warning(`[${from}] connection state: ${state}`);
         break;
       case "error":
       case "rejected":
         log.error(`[${from}] connection state: ${state}`);
+        rxn.reconnect(from);
         break;
       default:
         // no-op
@@ -109,16 +119,6 @@ const main = async () => {
     }
   };
   rxn.createConnectionStateObservable().subscribe(onConnStateChange);
-
-  // reconnect on error
-  setInterval(() => {
-    if (["error", "rejected"].includes(rxn.getRelayState(env.SRTRELAY_URL))) {
-      log.warning("reconnecting to srtrelay");
-      rxn.reconnect(env.SRTRELAY_URL);
-    }
-  }, 5000);
-  // schedule force reconnect for the first time
-  scheduleForceReconnect();
 
   // launch subsystems
   launchCmdChecker(appCtx);
