@@ -78,7 +78,7 @@ export const grantShiritoriPoint = (
 export const unixDayJst = (unixtimeSec: number) =>
   Math.floor((unixtimeSec + 9 * 3600) / (24 * 3600));
 
-const dailyPointAmount = 10;
+const dailyPointAmount = 3;
 
 export const grantDailyPoint = (
   lastAcceptedAt: number | null,
@@ -103,19 +103,27 @@ export const grantDailyPoint = (
 };
 
 /* bonus point for hibernation-breaking post */
-// threshold of considering inactivity as "hibernation": 1 hour
-const hibernationMinIntervalSec = 1 * 60 * 60;
-const hibernationBreakingPointMax = 10;
-const hibernationBreakingPointAmount = (
+// threshold of considering inactivity as "hibernation": 2 hour
+const hibernationMinIntervalSec = 2 * 60 * 60;
+const hibernationBreakingPointMax = 15;
+export const hibernationBreakingPointAmount = (
   intervalSec: number,
   minIntervalSec: number,
 ) => {
-  const effectiveIntervalHr = (intervalSec - minIntervalSec) / 3600;
-  if (effectiveIntervalHr <= 0) {
+  if (intervalSec <= minIntervalSec) {
     return 0;
   }
-  const base = Math.floor(Math.pow(effectiveIntervalHr, 0.25) * 6);
-  return Math.min(Math.max(base, 1), hibernationBreakingPointMax);
+  const intervalHr = intervalSec / 3600;
+  const pt = (() => {
+    if (intervalHr <= 12) {
+      return intervalHr / 2;
+    }
+    if (intervalHr <= 20) {
+      return (intervalHr - 12) * 5 / 8 + 6;
+    }
+    return intervalHr - 9;
+  })();
+  return Math.min(Math.floor(pt), hibernationBreakingPointMax);
 };
 
 export const grantHibernationBreakingPoint = (
@@ -150,9 +158,9 @@ export const grantHibernationBreakingPoint = (
 };
 
 /* bonus point for nice-pass post */
-// threshold of "shortness" of consecutive shiritori connection span: 5 minutes
+// threshold of "shortness" of consecutive shiritori connection span: 10 minutes
 // in this case, preceding connection considered as "nice pass"
-const nicePassMaxIntervalSec = 5 * 60;
+const nicePassMaxIntervalSec = 10 * 60;
 const nicePassPointMaxAmount = 5;
 const nicePassPointAmount = (intervalSec: number, maxIntervalSec: number) => {
   const effectiveIntervalSec = maxIntervalSec - intervalSec;
@@ -197,7 +205,7 @@ const isSpecialConnection = (prevLast: string, newHead: string) =>
   [["ヴ", "ブ"], ["ヲ", "オ"], ["ヰ", "イ"], ["ヱ", "エ"]].some(([pl, nh]) =>
     pl === prevLast && nh === newHead
   );
-const specialConnectionPointAmount = 5;
+const specialConnectionPointAmount = 10;
 
 export const grantSpecialConnectionPoint = (
   prevSc: LastShiritoriConnectionRecord | null,
