@@ -3,15 +3,20 @@ import { join } from "std/path";
 import { getNextKana } from "./common.ts";
 import { AppContext, EnvVars } from "./context.ts";
 import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
+import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
 
+type CommandContext = {
+  env: EnvVars;
+  rtpRepo: RitrinPointTxRepo;
+  matches: RegExpMatchArray;
+};
 type CommandDef = {
   key: string;
   trigger: RegExp;
   allowTrailingQuestions: boolean;
   handle: (
     event: NostrEvent,
-    env: EnvVars,
-    matches: RegExpMatchArray,
+    ctx: CommandContext,
   ) => NostrEventPre[] | Promise<NostrEventPre[]>;
 };
 
@@ -31,9 +36,18 @@ const silentMention = (target: NostrEvent, content: string): NostrEventPre => {
   };
 };
 
+const reply = (target: NostrEvent, content: string): NostrEventPre => {
+  return {
+    kind: 1,
+    content,
+    tags: [["p", target.pubkey, ""], ["e", target.id, "", "root"]],
+  };
+};
+
 const helpText = `「!」からはじまる投稿がコマンドとして扱われます(例: !次)。
 
 - next,次: 次の投稿をどの文字からはじめればいいか答えます。
+- point,ポイント: りとりんポイントの獲得状況を表示します。
 - ping,生きてる?: botが生きているか確認します。
 - help,ヘルプ: このヘルプを表示します。
 `;
@@ -43,16 +57,45 @@ const commands: CommandDef[] = [
     key: "next",
     trigger: /^next|(次|つぎ)は?((何|なに)(から)?)?$/i,
     allowTrailingQuestions: true,
-    handle: async (event, env) => {
+    handle: async (event, { env }) => {
       const next = await getNextKana(env);
       return [silentMention(event, `次は「${next}」から！`)];
+    },
+  },
+  {
+    key: "point",
+    trigger: /^point|ポイント$/i,
+    allowTrailingQuestions: false,
+    handle: async (event, { rtpRepo }) => {
+      const txs = await rtpRepo.findAllByPubkey(event.pubkey);
+      const startOfToday =
+        Temporal.Now.zonedDateTimeISO().startOfDay().epochSeconds;
+
+      const [total, today] = txs.reduce(
+        (
+          [total, today],
+          { amount, grantedAt },
+        ) => [
+          total + amount,
+          grantedAt >= startOfToday ? today + amount : today,
+        ],
+        [0, 0],
+      );
+      const lines = [
+        "あなたのりとりんポイント獲得状況❗",
+        `累計: ${total} ポイント`,
+        `本日: ${today} ポイント`,
+      ];
+      return [
+        reply(event, lines.join("\n")),
+      ];
     },
   },
   {
     key: "ping",
     trigger: /^ping|(生|い)き(て|と)る\?$/i,
     allowTrailingQuestions: false,
-    handle: async (event, env, matches) => {
+    handle: async (event, { env, matches }) => {
       try {
         const apiHealthResp = await fetch(`${env.YOMI_API_BASE_URL}/health`, {
           signal: AbortSignal.timeout(5000),
@@ -107,6 +150,7 @@ export const matchCommand = (
 export const handleCommand = async (
   cmdEv: NostrEvent,
   env: EnvVars,
+  rtpRepo: RitrinPointTxRepo,
 ): Promise<NostrEventUnsigned[]> => {
   const cmdMatch = matchCommand(cmdEv.content);
   if (cmdMatch === undefined) {
@@ -115,7 +159,7 @@ export const handleCommand = async (
   const { cmdDef, matches } = cmdMatch;
 
   try {
-    const res = await cmdDef.handle(cmdEv, env, matches);
+    const res = await cmdDef.handle(cmdEv, { env, matches, rtpRepo });
     return res.map((e, i) => ({
       ...e,
       created_at: cmdEv.created_at + 1 + i,

@@ -17,6 +17,7 @@ import { launchShiritoriConnectionHook } from "./ritrin_point/handler.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData, NostrEventUnsigned } from "./types.ts";
 import { systemTimeZone } from "./common.ts";
+import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
 
 const main = async () => {
   log.setup({
@@ -53,6 +54,7 @@ const main = async () => {
     writeRelayUrls,
     ritrinPointKv,
   };
+  const rtpRepo = new RitrinPointTxRepo(ritrinPointKv);
 
   const botPubkey = getPublicKey(env.RITRIN_PRIVATE_KEY);
 
@@ -72,7 +74,7 @@ const main = async () => {
     .subscribe(async ({ event }) => {
       if (event.content.startsWith("!")) {
         // handle commands
-        const res = await handleCommand(event, env);
+        const res = await handleCommand(event, env, rtpRepo);
         for (const e of res) {
           rxn.send(e, { seckey: env.RITRIN_PRIVATE_KEY });
         }
