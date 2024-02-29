@@ -16,13 +16,18 @@ import { AppContext, maskSecretsInEnvVars, parseEnvVars } from "./context.ts";
 import { launchShiritoriConnectionHook } from "./ritrin_point/handler.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData, NostrEventUnsigned } from "./types.ts";
+import { systemTimeZone } from "./common.ts";
 
 const main = async () => {
   log.setup({
     handlers: {
       console: new log.handlers.ConsoleHandler("DEBUG", {
         formatter: ({ levelName, datetime, msg }) => {
-          return `${datetime.toLocaleString()} [${levelName.padEnd(8)}] ${msg}`;
+          const dt = datetime
+            .toTemporalInstant()
+            .toZonedDateTimeISO(systemTimeZone)
+            .toString({ timeZoneName: "never" });
+          return `${dt} [${levelName.padEnd(8)}] ${msg}`;
         },
       }),
     },
