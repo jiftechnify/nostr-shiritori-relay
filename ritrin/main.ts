@@ -109,10 +109,14 @@ const main = async () => {
         log.warning(`[${from}] connection state: ${state}`);
         break;
       case "error":
-      case "rejected":
+      case "rejected": {
         log.error(`[${from}] connection state: ${state}`);
-        rxn.reconnect(from);
+        const relayCnf = rxn.getDefaultRelay(from);
+        if (relayCnf?.read) {
+          rxn.reconnect(from);
+        }
         break;
+      }
       default:
         // no-op
         break;
