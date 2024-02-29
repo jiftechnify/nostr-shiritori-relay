@@ -26,7 +26,7 @@ const main = async () => {
           const dt = datetime
             .toTemporalInstant()
             .toZonedDateTimeISO(systemTimeZone)
-            .toString({ timeZoneName: "never" });
+            .toString({ timeZoneName: "never", fractionalSecondDigits: 3 });
           return `${dt} [${levelName.padEnd(8)}] ${msg}`;
         },
       }),
@@ -60,7 +60,7 @@ const main = async () => {
   rxn.setDefaultRelays((rawAccountData as AccountData).relays);
 
   // main logic: subscribe to posts on relays and react to them
-  const ritrinCallRegexp = /^りっ*とり[ー〜]*ん.*$/;
+  const ritrinCallRegexp = /りっ*とり[ー〜]*ん/;
   const req = createRxForwardReq();
   rxn
     .use(req)
