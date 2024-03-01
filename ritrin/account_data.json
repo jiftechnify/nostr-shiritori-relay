@@ -2,7 +2,7 @@
   "profile": {
     "name": "srtr_ritrin",
     "display_name": "りとりん",
-    "about": "しりとリレーの番人(bot)。\n・「!」からはじまるコマンドに応答します (例: 「!next」 → 次の投稿をどの文字からはじめればいいか答える)\n・しりとリが繋がった投稿にリアクション❗します\n\nリレーURL: wss://srtrelay.c-stellar.net\nのぞき窓: https://srtrelay.c-stellar.net\n\n管理者: かすてらふぃ(NIP-05: jiftechnify@c-stellar.net)\nイラスト: たーごいる(NIP-05: _@targoyle.jp)",
+    "about": "しりとリレーの番人(bot)。\n・「r!」からはじまるコマンドに応答します (例: 「r!next」 → 次の投稿をどの文字からはじめればいいか答える)\n・しりとリが繋がった投稿にリアクション❗します\n\nリレーURL: wss://srtrelay.c-stellar.net\nのぞき窓: https://srtrelay.c-stellar.net\n\n管理者: かすてらふぃ(NIP-05: jiftechnify@c-stellar.net)\nイラスト: たーごいる(NIP-05: _@targoyle.jp)",
     "picture": "https://pubimgs.c-stellar.net/ritrin1_s.webp",
     "banner": "https://pubimgs.c-stellar.net/ritrin2_banner_s.webp",
     "website": "https://srtrelay.c-stellar.net",
