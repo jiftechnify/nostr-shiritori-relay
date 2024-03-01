@@ -18,6 +18,7 @@ import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData, NostrEventUnsigned } from "./types.ts";
 import { systemTimeZone } from "./common.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
+import { isLikelyCommand } from "./commands.ts";
 
 const main = async () => {
   log.setup({
@@ -62,7 +63,6 @@ const main = async () => {
   rxn.setDefaultRelays((rawAccountData as AccountData).relays);
 
   // main logic: subscribe to posts on relays and react to them
-  const ritrinCallRegexp = /りっ*とり[ー〜]*ん/;
   const req = createRxForwardReq();
   rxn
     .use(req)
@@ -72,7 +72,7 @@ const main = async () => {
       filter(({ event }) => event.pubkey !== botPubkey),
     )
     .subscribe(async ({ event }) => {
-      if (event.content.startsWith("!")) {
+      if (isLikelyCommand(event.content)) {
         // handle commands
         const res = await handleCommand(event, env, rtpRepo);
         for (const e of res) {
@@ -80,8 +80,8 @@ const main = async () => {
         }
         return;
       }
-      if (ritrinCallRegexp.test(event.content)) {
-        // respond to "りとりん" call with reaction
+      if (isRitrinCall(event.content)) {
+        // respond to "りっとりーん" call with reaction
         log.info(`Ritrin called: ${event.content} (id: ${event.id})`);
         const resp: NostrEventUnsigned = {
           kind: 7,
@@ -155,6 +155,12 @@ const main = async () => {
     env.RITRIN_PRIVATE_KEY,
   );
   log.info("Ritrin launched !(ง๑ •̀_•́)ง");
+};
+
+const ritrinCallRegexp = /りっ*とり[ー〜]*ん/g;
+const isRitrinCall = (content: string): boolean => {
+  const matches = content.matchAll(ritrinCallRegexp);
+  return [...matches].some((m) => m[0] !== "りとりん");
 };
 
 if (import.meta.main) {
