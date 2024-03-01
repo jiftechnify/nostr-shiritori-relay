@@ -18,6 +18,7 @@ import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData, NostrEventUnsigned } from "./types.ts";
 import { systemTimeZone } from "./common.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
+import { isLikelyCommand } from "./commands.ts";
 
 const main = async () => {
   log.setup({
@@ -72,7 +73,7 @@ const main = async () => {
       filter(({ event }) => event.pubkey !== botPubkey),
     )
     .subscribe(async ({ event }) => {
-      if (event.content.startsWith("!")) {
+      if (isLikelyCommand(event.content)) {
         // handle commands
         const res = await handleCommand(event, env, rtpRepo);
         for (const e of res) {

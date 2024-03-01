@@ -44,27 +44,28 @@ const reply = (target: NostrEvent, content: string): NostrEventPre => {
   };
 };
 
-const helpText = `「!」からはじまる投稿がコマンドとして扱われます(例: !次)。
+const helpText =
+  `「r!」「りとりん、」に続けてコマンドを入力してね❗ (例:「r!next」「りとりん、ポイント」)
 
 - next,次: 次の投稿をどの文字からはじめればいいか答えます。
 - point,ポイント: りとりんポイントの獲得状況を表示します。
-- ping,生きてる?: botが生きているか確認します。
+- ping,生きてる?: しりとリレーが生きているか確認します。
 - help,ヘルプ: このヘルプを表示します。
 `;
 
 const commands: CommandDef[] = [
   {
     key: "next",
-    trigger: /^next|(次|つぎ)は?((何|なに)(から)?)?$/i,
+    trigger: /^(next|(次|つぎ)は?((何|なに)(から)?)?)$/i,
     allowTrailingQuestions: true,
     handle: async (event, { env }) => {
       const next = await getNextKana(env);
-      return [silentMention(event, `次は「${next}」から！`)];
+      return [silentMention(event, `次は「${next}」から❗`)];
     },
   },
   {
     key: "point",
-    trigger: /^point|ポイント$/i,
+    trigger: /^(point|ポイント)$/i,
     allowTrailingQuestions: false,
     handle: async (event, { rtpRepo }) => {
       const txs = await rtpRepo.findAllByPubkey(event.pubkey);
@@ -93,7 +94,7 @@ const commands: CommandDef[] = [
   },
   {
     key: "ping",
-    trigger: /^ping|(生|い)き(て|と)る\?$/i,
+    trigger: /^(ping|[生い]き([てと])る[?？]$)/i,
     allowTrailingQuestions: false,
     handle: async (event, { env, matches }) => {
       try {
@@ -105,16 +106,16 @@ const commands: CommandDef[] = [
         }
 
         const t = matches[2] ?? "て";
-        return [silentMention(event, `生き${t}るよ！`)];
+        return [silentMention(event, `生き${t}るよ❗`)];
       } catch (e) {
-        log.error(`something wrong with the system: ${e}`);
+        log.error(`r!ping: something wrong with the system: ${e}`);
         return [silentMention(event, "調子が悪いみたい…")];
       }
     },
   },
   {
     key: "help",
-    trigger: /^help|ヘルプ$/i,
+    trigger: /^(help|ヘルプ)$/i,
     allowTrailingQuestions: false,
     handle: () => {
       return [plainNote(helpText)];
@@ -122,14 +123,29 @@ const commands: CommandDef[] = [
   },
 ];
 
+const commandTriggers = ["r!", "りとりん、"];
+
+export const isLikelyCommand = (input: string): boolean => {
+  return commandTriggers.some((t) => input.startsWith(t));
+};
+
+const stripCommandTrigger = (input: string): string => {
+  for (const trigger of commandTriggers) {
+    if (input.startsWith(trigger)) {
+      return input.replace(trigger, "").trim();
+    }
+  }
+  return input;
+};
+
 export const matchCommand = (
   input: string,
 ): { cmdDef: CommandDef; matches: RegExpMatchArray } | undefined => {
-  if (!input.startsWith("!")) {
+  if (!isLikelyCommand(input)) {
     log.info(`not a command: ${input}`);
     return undefined;
   }
-  const rawCmd = input.substring(1);
+  const rawCmd = stripCommandTrigger(input);
   log.info(`received: ${rawCmd}`);
 
   for (const cmdDef of commands) {
