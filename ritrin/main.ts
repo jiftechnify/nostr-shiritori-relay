@@ -7,8 +7,8 @@ import {
   verify,
 } from "rx-nostr";
 import { filter } from "rxjs";
-import * as log from "std/log";
-import * as path from "std/path";
+import * as log from "std/log/mod.ts";
+import * as path from "std/path/mod.ts";
 import rawAccountData from "./account_data.json" with { type: "json" };
 import { handleCommand, launchCmdChecker } from "./commands.ts";
 import { currUnixtime, publishToRelays } from "./common.ts";
@@ -23,7 +23,7 @@ import { isLikelyCommand } from "./commands.ts";
 const main = async () => {
   log.setup({
     handlers: {
-      console: new log.handlers.ConsoleHandler("DEBUG", {
+      console: new log.ConsoleHandler("DEBUG", {
         formatter: ({ levelName, datetime, msg }) => {
           const dt = datetime
             .toTemporalInstant()
@@ -31,6 +31,7 @@ const main = async () => {
             .toString({ timeZoneName: "never", fractionalSecondDigits: 3 });
           return `${dt} [${levelName.padEnd(8)}] ${msg}`;
         },
+        useColors: false,
       }),
     },
     loggers: {
@@ -113,7 +114,7 @@ const main = async () => {
         break;
       case "waiting-for-retrying":
       case "retrying":
-        log.warning(`[${from}] connection state: ${state}`);
+        log.warn(`[${from}] connection state: ${state}`);
         break;
       case "error":
       case "rejected": {

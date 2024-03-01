@@ -1,4 +1,4 @@
-import * as log from "std/log";
+import * as log from "std/log/mod.ts";
 import { ulid } from "ulid";
 import { RitrinPointTransaction } from "./model.ts";
 
