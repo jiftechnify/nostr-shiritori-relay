@@ -4,6 +4,7 @@ import {
   lastShiritoriConnectionKey,
 } from "./ritrin_point/grant.ts";
 import { RitrinPointTransaction } from "./ritrin_point/model.ts";
+import { NostrFetcher } from "nostr-fetch";
 
 type LastShiritoriConnectionRecord = {
   pubkey: string;
@@ -32,6 +33,15 @@ const showUsageAndExit = () => {
 };
 
 const dateStrOfToday = () => Temporal.Now.plainDateISO().toString();
+
+const parseProfileName = (k0Content: string) => {
+  try {
+    const profile = JSON.parse(k0Content);
+    return profile.display_name ?? profile.name ?? "???";
+  } catch {
+    return "???";
+  }
+};
 
 if (import.meta.main) {
   const kv = await Deno.openKv("../resource/rtp.db");
@@ -107,6 +117,35 @@ if (import.meta.main) {
       console.log(`${txs.length} records found`);
       for (const tx of txs) {
         console.log(tx);
+      }
+      break;
+    }
+    case "ranking": {
+      const rtpTxRepo = new RitrinPointTxRepo(kv);
+      const txs = await rtpTxRepo.findAllWithinDay(dateStrOfToday());
+      const ptsPerPubkey = txs.reduce(
+        (acc, tx) => acc.set(tx.pubkey, (acc.get(tx.pubkey) ?? 0) + tx.amount),
+        new Map<string, number>(),
+      );
+
+      const ranking = [...ptsPerPubkey.entries()].sort(
+        ([, a], [, b]) => b - a,
+      );
+
+      const profilesIter = NostrFetcher.init().fetchLastEventPerAuthor({
+        authors: [...ptsPerPubkey.keys()],
+        relayUrls: ["wss://directory.yabu.me", "wss://relay.nostr.band"],
+      }, { kinds: [0] });
+      const names = new Map<string, string>();
+      for await (const { author, event } of profilesIter) {
+        if (event !== undefined) {
+          names.set(author, parseProfileName(event.content));
+        } else {
+          names.set(author, "???");
+        }
+      }
+      for (const [pubkey, count] of ranking) {
+        console.log(`${names.get(pubkey) ?? pubkey}: ${count}`);
       }
       break;
     }
