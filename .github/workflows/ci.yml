@@ -1,0 +1,51 @@
+name: CI
+on:
+  pull_request:
+  
+jobs:
+  sifter:
+    name: CI (sifter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./sifter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+      - run: go vet ./...
+      - run: go test ./...
+  
+  yomi-api:
+    name: CI (yomi-api)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./yomi-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+      - run: go vet ./...
+      - run: go test ./...
+
+  ritrin:
+    name: CI (ritrin)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./ritrin  
+    steps:
+      - uses: actions/checkout@v4
+      - uses: denoland/setup-deno@v1.1.4
+        with:
+          deno-version: "~1.41"
+      - run: deno fmt --check
+      - run: deno lint
+      #- run: deno task check # deno check **/*.ts
+      - run: deno task test # deno test -A --unstable-kv --unstable-temporal --no-check
+
+  typos:
+    name: Detect typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: crate-ci/typos@v1.17.0

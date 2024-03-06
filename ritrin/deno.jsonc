@@ -12,6 +12,8 @@
   "tasks": {
     "start": "deno run -A --unstable-kv --unstable-temporal main.ts",
     "set-data": "deno run -A --unstable-temporal set_account_data.ts",
-    "rtp-inspect": "deno run -A --unstable-kv --unstable-temporal rtp_inspect.ts"
+    "rtp-inspect": "deno run -A --unstable-kv --unstable-temporal rtp_inspect.ts",
+    "check": "deno check **/*.ts",
+    "test": "deno test -A --unstable-kv --unstable-temporal --no-check"
   }
 }
