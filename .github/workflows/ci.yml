@@ -4,7 +4,7 @@ on:
   
 jobs:
   sifter:
-    name: CI (sifter)
+    name: sifter
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -16,7 +16,7 @@ jobs:
       - run: go test ./...
   
   yomi-api:
-    name: CI (yomi-api)
+    name: yomi-api
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -28,7 +28,7 @@ jobs:
       - run: go test ./...
 
   ritrin:
-    name: CI (ritrin)
+    name: ritrin
     runs-on: ubuntu-latest
     defaults:
       run:
