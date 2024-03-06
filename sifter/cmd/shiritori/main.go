@@ -33,7 +33,7 @@ var (
 )
 
 var (
-	regexpCommands  = regexp.MustCompile(`^!.+$`)
+	regexpCommands  = regexp.MustCompile(`^(r!|りとりん、)`)
 	regexpHexPubkey = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
 
