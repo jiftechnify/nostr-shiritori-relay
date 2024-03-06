@@ -1,0 +1,2 @@
+[files]
+extend-exclude = ["**/go.mod", "yomi-api/dicts/*", "nozokimado/**/*"]

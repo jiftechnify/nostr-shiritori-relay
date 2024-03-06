@@ -1,8 +1,4 @@
-import { assertNotEquals } from "https://deno.land/std@0.210.0/assert/assert_not_equals.ts";
-import {
-  assert,
-  assertEquals,
-} from "https://deno.land/std@0.210.0/assert/mod.ts";
+import { assert, assertEquals, assertNotEquals } from "std/assert/mod.ts";
 import {
   grantDailyPoint,
   grantHibernationBreakingPoint,
@@ -50,7 +46,7 @@ Deno.test("grantDailyPoint", async (t) => {
         type: "daily",
         pubkey: "p1",
         eventId: "e1",
-        amount: 10,
+        amount: 3,
         grantedAt: baseAcceptedAt,
       });
     },
@@ -74,7 +70,7 @@ Deno.test("grantDailyPoint", async (t) => {
         type: "daily",
         pubkey: "p1",
         eventId: "e1",
-        amount: 10,
+        amount: 3,
         grantedAt: newAcceptedAt,
       });
     },
@@ -197,7 +193,7 @@ Deno.test("grantHibernationBreakingPoint", async (t) => {
       assert(pt !== undefined, "pt should not be undefined");
       assertEquals(pt, {
         type: "hibernation-breaking",
-        amount: 10,
+        amount: 15,
         pubkey: "p2",
         eventId: "e2",
         grantedAt: newScp.acceptedAt,
@@ -403,7 +399,7 @@ Deno.test("grantSpecialConnectionPoint", async (t) => {
         assert(pt !== undefined, "pt should not be undefined");
         assertEquals(pt, {
           type: "special-connection",
-          amount: 5,
+          amount: 10,
           pubkey: "p2",
           eventId: "e2",
           grantedAt: newScp.acceptedAt,

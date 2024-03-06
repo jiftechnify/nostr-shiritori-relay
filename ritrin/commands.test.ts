@@ -1,5 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.210.0/assert/assert_equals.ts";
-import { assert } from "https://deno.land/std@0.210.0/assert/mod.ts";
+import { assert, assertEquals } from "std/assert/mod.ts";
 import { matchCommand } from "./commands.ts";
 
 Deno.test("matchCommand", async (t) => {

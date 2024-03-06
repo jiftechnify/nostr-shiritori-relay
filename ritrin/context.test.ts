@@ -1,9 +1,5 @@
-import { assertEquals } from "https://deno.land/std@0.210.0/assert/mod.ts";
-import {
-  beforeEach,
-  describe,
-  it,
-} from "https://deno.land/std@0.210.0/testing/bdd.ts";
+import { assertEquals } from "std/assert/mod.ts";
+import { beforeEach, describe, it } from "std/testing/bdd.ts";
 import { parseEnvVars } from "./context.ts";
 
 const TEST_PRIVATE_KEY = {
