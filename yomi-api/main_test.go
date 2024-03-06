@@ -104,6 +104,7 @@ func TestEffectiveHeadAndList(t *testing.T) {
 		{in: "あーー", wantErr: false, head: 'ア', last: 'ア'},
 		{in: "ゎょ", wantErr: false, head: 'ヮ', last: 'ョ'},
 		{in: "りんごパイたびたぁい", wantErr: false, head: 'リ', last: 'イ'},
+		{in: "うにゅう", wantErr: false, head: 'ウ', last: 'ウ'},
 		{in: "ｳﾞｧｯ", wantErr: false, head: 'ヴ', last: 'ッ'},
 		{in: "ｳｶﾞﾝﾀﾞ", wantErr: false, head: 'ウ', last: 'ダ'},
 		{in: "ｳﾜｰ!", wantErr: false, head: 'ウ', last: 'ワ'},
