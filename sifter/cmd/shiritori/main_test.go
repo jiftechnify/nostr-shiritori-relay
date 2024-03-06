@@ -50,7 +50,7 @@ func TestShiritoriSifter_basic(t *testing.T) {
 			want: strfrui.ActionAccept,
 		},
 		{
-			ev:   testEvent(func(ev *nostr.Event) { ev.Kind = nostr.KindSetMetadata }),
+			ev:   testEvent(func(ev *nostr.Event) { ev.Kind = nostr.KindProfileMetadata }),
 			want: strfrui.ActionShadowReject,
 		},
 		{
