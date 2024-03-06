@@ -33,7 +33,7 @@ var (
 )
 
 var (
-	regexpCommands  = regexp.MustCompile(`^!.+$`)
+	regexpCommands  = regexp.MustCompile(`^(r!|りとりん、)`)
 	regexpHexPubkey = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
 
@@ -180,29 +180,16 @@ func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 		return input.Reject("blocked: couldn't determine head/last of reading of content")
 	}
 
-	f, err := os.OpenFile(filepath.Join(resourceDirPath, "last_kana.txt"), os.O_RDWR|os.O_CREATE, 0666)
+	isShiritori, err := judgeShiritoriConnection(hl, input.Event)
 	if err != nil {
+		log.Printf("failed to judge shiritori connection: %v", err)
 		return nil, err
 	}
-	defer f.Close()
-
-	b, err := io.ReadAll(f)
-	if err != nil {
-		return nil, err
-	}
-	if len(b) > 0 {
-		s := string(b)
-		prevLast := []rune(s)[0]
-
-		if !isShiritoriConnected(prevLast, hl.Head) {
-			log.Printf("❌Rejected! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
-			return input.Reject("blocked: shiritori not connected")
-		}
+	if !isShiritori {
+		log.Printf("❌Rejected! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
+		return input.Reject("blocked: shiritori not connected")
 	}
 
-	if err := saveLastKana(f, hl.Last); err != nil {
-		return nil, err
-	}
 	// notify shiritori connection to ritrin
 	notifyShiritoriConnection(shiritoriConnectedPost{
 		Pubkey:     input.Event.PubKey,
@@ -299,7 +286,6 @@ func notifyShiritoriConnection(scp shiritoriConnectedPost) {
 		log.Printf("failed to notify shiritori connection: %v", err)
 		return
 	}
-
 	log.Printf("notified shiritori connection: %+v", scp)
 }
 
@@ -362,15 +348,67 @@ func isShiritoriConnected(prevLast, currHead rune) bool {
 	return false
 }
 
-func saveLastKana(f *os.File, last rune) error {
+type lastKanaData struct {
+	lastKana rune
+	eventID  string
+}
+
+func loadLastKana(r io.Reader) (*lastKanaData, error) {
+	b, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(b) == 0 {
+		return nil, nil
+	}
+	lines := strings.Split(string(b), "\n")
+	lastKana := []rune(lines[0])[0]
+	eventID := ""
+	if len(lines) > 1 {
+		eventID = lines[1]
+	}
+	return &lastKanaData{lastKana, eventID}, nil
+}
+
+func saveLastKana(f *os.File, d *lastKanaData) error {
 	if err := f.Truncate(0); err != nil {
 		return err
 	}
 	if _, err := f.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
-	if _, err := fmt.Fprintf(f, "%c", last); err != nil {
+	if _, err := fmt.Fprintf(f, "%c\n%s", d.lastKana, d.eventID); err != nil {
 		return err
 	}
 	return nil
+}
+
+func judgeShiritoriConnection(hl *HeadLastKanaResp, ev *nostr.Event) (bool, error) {
+	f, err := os.OpenFile(filepath.Join(resourceDirPath, "last_kana.txt"), os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return false, err
+	}
+	defer f.Close()
+
+	prev, err := loadLastKana(f)
+	if err != nil {
+		return false, err
+	}
+
+	if prev != nil {
+		if ev.ID == prev.eventID {
+			// reject same event
+			return false, nil
+		}
+		if !isShiritoriConnected(prev.lastKana, hl.Head) {
+			return false, nil
+		}
+	}
+
+	// no prev (first event) or shiritori connected
+	if err := saveLastKana(f, &lastKanaData{hl.Last, ev.ID}); err != nil {
+		return false, err
+	}
+	return true, nil
 }
