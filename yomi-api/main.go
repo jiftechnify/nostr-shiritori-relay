@@ -362,7 +362,7 @@ var (
 // normalize the string for determining reading.
 //
 // normalization proecss includes:
-//   - normalizing various space charcters to the "normal" space
+//   - normalizing various space characters to the "normal" space
 //   - removing http/ws URIs, Nostr IDs (`nxxx1...` things, including `nostr:` prefix) and custom emoji shortcodes (e.g. ":foo:")
 //   - replacing numbers (sequences of digits) with their readings
 //   - trimming trailing period
@@ -420,9 +420,30 @@ func getEnWordReading(word string) (string, bool) {
 var (
 	regexpAllEnAlphabet = regexp.MustCompile(`^[a-zA-Z]+$`)
 	regexpAllHwKana     = regexp.MustCompile(`^[ｦ-ﾟ]+$`)
+	regexpAllFwKana     = regexp.MustCompile(`^[ぁ-ゖァ-ヶ]+$`)
 )
 
 func headKanaOfToken(t tokenizer.Token) rune {
+	// if the token consists of only fullwidth katakana, just get head
+	if regexpAllFwKana.MatchString(t.Surface) {
+		return normalizeSingleKana([]rune(t.Surface)[0])
+	}
+
+	// if the token consists of only halfwidth katakana, get head and convert it to fullwidth
+	if regexpAllHwKana.MatchString(t.Surface) {
+		rs := []rune(t.Surface)
+		h := 0
+		for ; h < len(rs); h++ {
+			if isKana(rs[h]) {
+				break
+			}
+		}
+		if h >= len(rs) {
+			return 0
+		}
+		return normalizeKanaAt(rs, h)
+	}
+
 	// get head kana from reading of the token
 	if r, ok := t.Reading(); ok {
 		if k := headKana(r); k != 0 {
@@ -448,21 +469,6 @@ func headKanaOfToken(t tokenizer.Token) rune {
 		return 0
 	}
 
-	// if the token consists of only halfwidth katakana, get head and convert it to fullwidth
-	if regexpAllHwKana.MatchString(t.Surface) {
-		rs := []rune(t.Surface)
-		h := 0
-		for ; h < len(rs); h++ {
-			if isKana(rs[h]) {
-				break
-			}
-		}
-		if h >= len(rs) {
-			return 0
-		}
-		return normalizeKanaAt(rs, h)
-	}
-
 	// get head kana from surface form of the token
 	if k := headKana(t.Surface); k != 0 {
 		return normalizeSingleKana(k)
@@ -481,6 +487,27 @@ func headKana(r string) rune {
 }
 
 func lastKanaOfToken(t tokenizer.Token) rune {
+	// if the token consists of only fullwidth katakana, just get last
+	if regexpAllFwKana.MatchString(t.Surface) {
+		rs := []rune(t.Surface)
+		return normalizeSingleKana(rs[len(rs)-1])
+	}
+
+	// if the token consists of only halfwidth katakana, get last and convert it to fullwidth
+	if regexpAllHwKana.MatchString(t.Surface) {
+		rs := []rune(t.Surface)
+		l := len(rs) - 1
+		for ; l >= 0; l-- {
+			if isKana(rs[l]) {
+				break
+			}
+		}
+		if l < 0 {
+			return 0
+		}
+		return normalizeKanaAt(rs, l)
+	}
+
 	// get last kana from reading of the token
 	if r, ok := t.Reading(); ok {
 		if k := lastKana(r); k != 0 {
@@ -504,21 +531,6 @@ func lastKanaOfToken(t tokenizer.Token) rune {
 			}
 		}
 		return 0
-	}
-
-	// if the token consists of only halfwidth katakana, get last and convert it to fullwidth
-	if regexpAllHwKana.MatchString(t.Surface) {
-		rs := []rune(t.Surface)
-		l := len(rs) - 1
-		for ; l >= 0; l-- {
-			if isKana(rs[l]) {
-				break
-			}
-		}
-		if l < 0 {
-			return 0
-		}
-		return normalizeKanaAt(rs, l)
 	}
 
 	// get last kana from surface form of the token
