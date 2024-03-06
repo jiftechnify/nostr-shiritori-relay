@@ -49,6 +49,7 @@ export const publishToRelays = async (
 
 export const LAST_KANA_FILEPATH = "last_kana.txt";
 
-export const getNextKana = (env: EnvVars): Promise<string> => {
-  return Deno.readTextFile(join(env.RESOURCE_DIR, LAST_KANA_FILEPATH));
+export const getNextKana = async (env: EnvVars): Promise<string> => {
+  const t = await Deno.readTextFile(join(env.RESOURCE_DIR, LAST_KANA_FILEPATH));
+  return t.charAt(0);
 };
