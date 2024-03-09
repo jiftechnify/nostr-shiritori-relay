@@ -13,7 +13,6 @@ type CommandContext = {
 type CommandDef = {
   key: string;
   trigger: RegExp;
-  allowTrailingQuestions: boolean;
   handle: (
     event: NostrEvent,
     ctx: CommandContext,
@@ -56,8 +55,8 @@ const helpText =
 const commands: CommandDef[] = [
   {
     key: "next",
-    trigger: /^(next|(次|つぎ)は?((何|なに)(から)?)?)$/i,
-    allowTrailingQuestions: true,
+    trigger:
+      /^(next|(次|つぎ)は?((何|なに)(から)?)?[?？]?)$|^[\u{23e9}\u{27a1}\u{1f51c}]/iu,
     handle: async (event, { env }) => {
       const next = await getNextKana(env);
       return [silentMention(event, `次は「${next}」から❗`)];
@@ -65,8 +64,7 @@ const commands: CommandDef[] = [
   },
   {
     key: "point",
-    trigger: /^(point|ポイント)$/i,
-    allowTrailingQuestions: false,
+    trigger: /^(point|ポイント)$|^\u{1f17f}/iu,
     handle: async (event, { rtpRepo }) => {
       const txs = await rtpRepo.findAllByPubkey(event.pubkey);
       const startOfToday =
@@ -94,8 +92,7 @@ const commands: CommandDef[] = [
   },
   {
     key: "ping",
-    trigger: /^(ping|[生い]き([てと])る[?？]$)/i,
-    allowTrailingQuestions: false,
+    trigger: /^(ping|[生い]き([てと])る[?？])$|^[\u{1f44b}\u{1f918}]/iu,
     handle: async (event, { env, matches }) => {
       try {
         const apiHealthResp = await fetch(`${env.YOMI_API_BASE_URL}/health`, {
@@ -115,15 +112,14 @@ const commands: CommandDef[] = [
   },
   {
     key: "help",
-    trigger: /^(help|ヘルプ)$/i,
-    allowTrailingQuestions: false,
+    trigger: /^(help|ヘルプ)$|^\u{2753}/iu,
     handle: () => {
       return [plainNote(helpText)];
     },
   },
 ];
 
-const commandTriggers = ["r!", "りとりん、"];
+const commandTriggers = ["r!", "りとりん、", "\u{1f98a}\u{2757}"];
 
 export const isLikelyCommand = (input: string): boolean => {
   return commandTriggers.some((t) => input.startsWith(t));
@@ -145,15 +141,11 @@ export const matchCommand = (
     log.info(`not a command: ${input}`);
     return undefined;
   }
-  const rawCmd = stripCommandTrigger(input);
-  log.info(`received: ${rawCmd}`);
+  const cmdText = stripCommandTrigger(input);
+  log.info(`received: ${cmdText}`);
 
   for (const cmdDef of commands) {
-    const cmd = cmdDef.allowTrailingQuestions
-      ? rawCmd.replaceAll(/(\?|？)+$/g, "")
-      : rawCmd;
-
-    const matches = cmd.match(cmdDef.trigger);
+    const matches = cmdText.match(cmdDef.trigger);
     if (matches !== null) {
       log.info(`command matched: ${cmdDef.key}`);
       return { cmdDef, matches };
