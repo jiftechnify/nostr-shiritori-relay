@@ -20,6 +20,13 @@ Deno.test("matchCommand", async (t) => {
       { in: "りとりん、生きてる?", exp: "ping" },
       { in: "りとりん、生きてる？", exp: "ping" },
       { in: "りとりん、ヘルプ", exp: "help" },
+      { in: "🦊❗➡️", exp: "next" },
+      { in: "🦊❗🔜", exp: "next" },
+      { in: "🦊❗⏩", exp: "next" },
+      { in: "🦊❗🅿️", exp: "point" },
+      { in: "🦊❗👋", exp: "ping" },
+      { in: "🦊❗🤘", exp: "ping" },
+      { in: "🦊❗❓", exp: "help" },
     ];
 
     for (const test of tt) {
