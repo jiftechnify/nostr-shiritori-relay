@@ -119,7 +119,7 @@ const commands: CommandDef[] = [
   },
 ];
 
-const commandTriggers = ["r!", "りとりん、", "🦊❗"];
+const commandTriggers = ["r!", "りとりん、", "\u{1f98a}\u{2757}"];
 
 export const isLikelyCommand = (input: string): boolean => {
   return commandTriggers.some((t) => input.startsWith(t));
