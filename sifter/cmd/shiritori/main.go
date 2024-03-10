@@ -33,7 +33,6 @@ var (
 )
 
 var (
-	regexpCommands  = regexp.MustCompile(`^r!|りとりん、|\x{1f98a}\x{2757}`)
 	regexpHexPubkey = regexp.MustCompile(`^[0-9a-f]{64}$`)
 )
 
@@ -128,6 +127,11 @@ func (c *fakableClock) SetFake(t time.Time) {
 
 var clock = &fakableClock{}
 
+var (
+	// command prefixes: r!, りとりん、, 🦊❗
+	regexpCommandPrefixes = regexp.MustCompile(`^r!|りとりん、|\x{1f98a}\x{2757}`)
+)
+
 func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 	// reject events that don't have created_at within 1 minute of window from now
 	now := clock.Now()
@@ -160,7 +164,7 @@ func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 		return input.ShadowReject()
 	}
 	// accept bot commands
-	if regexpCommands.MatchString(input.Event.Content) {
+	if regexpCommandPrefixes.MatchString(input.Event.Content) {
 		if isCommandValid(input.Event.Content) {
 			log.Printf("accepting bot command: %s", input.Event.Content)
 			return input.Accept()

@@ -55,6 +55,7 @@ const helpText =
 const commands: CommandDef[] = [
   {
     key: "next",
+    // emoji triggers: ➡️, 🔜, ⏩
     trigger:
       /^(next|(次|つぎ)は?((何|なに)(から)?)?[?？]?)$|^[\u{23e9}\u{27a1}\u{1f51c}]/iu,
     handle: async (event, { env }) => {
@@ -64,6 +65,7 @@ const commands: CommandDef[] = [
   },
   {
     key: "point",
+    // emoji trigger: 🅿️
     trigger: /^(point|ポイント)$|^\u{1f17f}/iu,
     handle: async (event, { rtpRepo }) => {
       const txs = await rtpRepo.findAllByPubkey(event.pubkey);
@@ -92,6 +94,7 @@ const commands: CommandDef[] = [
   },
   {
     key: "ping",
+    // emoji triggers: 👋, 🤘
     trigger: /^(ping|[生い]き([てと])る[?？])$|^[\u{1f44b}\u{1f918}]/iu,
     handle: async (event, { env, matches }) => {
       try {
@@ -112,6 +115,7 @@ const commands: CommandDef[] = [
   },
   {
     key: "help",
+    // emoji trigger: ❓
     trigger: /^(help|ヘルプ)$|^\u{2753}/iu,
     handle: () => {
       return [plainNote(helpText)];
@@ -119,16 +123,17 @@ const commands: CommandDef[] = [
   },
 ];
 
-const commandTriggers = ["r!", "りとりん、", "\u{1f98a}\u{2757}"];
+// command prefixes: r!, りとりん、, 🦊❗
+const commandPrefixes = ["r!", "りとりん、", "\u{1f98a}\u{2757}"];
 
 export const isLikelyCommand = (input: string): boolean => {
-  return commandTriggers.some((t) => input.startsWith(t));
+  return commandPrefixes.some((t) => input.startsWith(t));
 };
 
 const stripCommandTrigger = (input: string): string => {
-  for (const trigger of commandTriggers) {
-    if (input.startsWith(trigger)) {
-      return input.replace(trigger, "").trim();
+  for (const cmdPrefix of commandPrefixes) {
+    if (input.startsWith(cmdPrefix)) {
+      return input.replace(cmdPrefix, "").trim();
     }
   }
   return input;
