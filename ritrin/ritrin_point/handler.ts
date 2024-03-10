@@ -2,13 +2,13 @@ import * as log from "std/log/mod.ts";
 import * as path from "std/path/mod.ts";
 import { currUnixtime, publishToRelays } from "../common.ts";
 import { AppContext } from "../context.ts";
+import { grantRitrinPoints } from "./grant.ts";
 import {
   BonusPointType,
   isBonusPoint,
   ShiritoriConnectedPost,
 } from "./model.ts";
 import { RitrinPointTxRepo } from "./tx.ts";
-import { grantRitrinPoints } from "./grant.ts";
 
 const reactionContentForBonusPointType: Record<BonusPointType, string> = {
   daily: "🎁",
