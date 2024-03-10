@@ -1,9 +1,10 @@
-import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
 import {
   lastShiritoriAcceptedAtPerAuthorKey,
   lastShiritoriConnectionKey,
 } from "./ritrin_point/grant.ts";
 import { RitrinPointTransaction } from "./ritrin_point/model.ts";
+import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
+import { dailyRtpRanking, formatRtpRanking } from "./rtp_ranking.ts";
 
 type LastShiritoriConnectionRecord = {
   pubkey: string;
@@ -24,6 +25,8 @@ Commands:
   point-tx <pubkey> [date-str]   Show all the point transactions of the pubkey.
                                  If date-str is given, show the transactions of the date.
                                  date-str format: yyyy-mm-dd or "today"
+  ranking [date-str]             Show the daily ritrin point ranking.
+                                 date-str format: yyyy-mm-dd or "today". If omitted, show today's ranking.
 `;
 
 const showUsageAndExit = () => {
@@ -107,6 +110,20 @@ if (import.meta.main) {
       console.log(`${txs.length} records found`);
       for (const tx of txs) {
         console.log(tx);
+      }
+      break;
+    }
+    case "ranking": {
+      const [dstr] = Deno.args.slice(1);
+      const dateStr = dstr ?? "today";
+
+      const ranking = await dailyRtpRanking(
+        kv,
+        dateStr === "today" ? dateStrOfToday() : dateStr,
+      );
+      const formatted = formatRtpRanking(ranking);
+      for (const line of formatted) {
+        console.log(line);
       }
       break;
     }

@@ -10,15 +10,18 @@ import { filter } from "rxjs";
 import * as log from "std/log/mod.ts";
 import * as path from "std/path/mod.ts";
 import rawAccountData from "./account_data.json" with { type: "json" };
-import { handleCommand, launchCmdChecker } from "./commands.ts";
-import { currUnixtime, publishToRelays } from "./common.ts";
+import {
+  handleCommand,
+  isLikelyCommand,
+  launchCommandChecker,
+} from "./commands.ts";
+import { currUnixtime, publishToRelays, systemTimeZone } from "./common.ts";
 import { AppContext, maskSecretsInEnvVars, parseEnvVars } from "./context.ts";
 import { launchShiritoriConnectionHook } from "./ritrin_point/handler.ts";
+import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
+import { launchPostDailyRtpRankingCron } from "./rtp_ranking.ts";
 import { launchStatusUpdater } from "./set_status.ts";
 import { AccountData, NostrEventUnsigned } from "./types.ts";
-import { systemTimeZone } from "./common.ts";
-import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
-import { isLikelyCommand } from "./commands.ts";
 
 const main = async () => {
   log.setup({
@@ -133,9 +136,10 @@ const main = async () => {
   rxn.createConnectionStateObservable().subscribe(onConnStateChange);
 
   // launch subsystems
-  launchCmdChecker(appCtx);
+  launchCommandChecker(appCtx);
   launchShiritoriConnectionHook(appCtx);
   launchStatusUpdater(appCtx);
+  launchPostDailyRtpRankingCron(appCtx);
 
   // setup handler for SIGTERM
   Deno.addSignalListener("SIGTERM", () => {

@@ -1,8 +1,8 @@
+import * as dotenv from "std/dotenv/mod.ts";
 import rawAccountData from "./account_data.json" with { type: "json" };
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { parseEnvVars } from "./context.ts";
 import { AccountData } from "./types.ts";
-import * as dotenv from "std/dotenv/mod.ts";
 
 const acctData: AccountData = rawAccountData;
 

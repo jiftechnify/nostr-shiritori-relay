@@ -7,8 +7,10 @@ import {
   grantSpecialConnectionPoint,
   unixDayJst,
 } from "./grant.ts";
-import { ShiritoriConnectedPost } from "./model.ts";
-import { LastShiritoriConnectionRecord } from "./model.ts";
+import {
+  LastShiritoriConnectionRecord,
+  ShiritoriConnectedPost,
+} from "./model.ts";
 
 const dateToUnixtimeSec = (date: Date) => Math.floor(date.getTime() / 1000);
 
