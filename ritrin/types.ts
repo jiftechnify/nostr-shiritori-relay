@@ -1,7 +1,10 @@
 import { EventPacket } from "rx-nostr";
 
 export type NostrEvent = EventPacket["event"];
-export type NostrEventUnsigned = Omit<NostrEvent, "sig" | "id" | "pubkey">;
+export type NostrEventUnsigned = Omit<
+  NostrEvent,
+  "sig" | "id" | "pubkey" | "ots"
+>;
 export type NostrEventPre = Omit<NostrEventUnsigned, "created_at">;
 
 export type RelayUsage = {

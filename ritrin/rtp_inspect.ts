@@ -1,10 +1,10 @@
-import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
 import {
   lastShiritoriAcceptedAtPerAuthorKey,
   lastShiritoriConnectionKey,
 } from "./ritrin_point/grant.ts";
 import { RitrinPointTransaction } from "./ritrin_point/model.ts";
-import { NostrFetcher } from "nostr-fetch";
+import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
+import { dailyRtpRanking, formatRtpRanking } from "./rtp_ranking.ts";
 
 type LastShiritoriConnectionRecord = {
   pubkey: string;
@@ -25,6 +25,8 @@ Commands:
   point-tx <pubkey> [date-str]   Show all the point transactions of the pubkey.
                                  If date-str is given, show the transactions of the date.
                                  date-str format: yyyy-mm-dd or "today"
+  ranking [date-str]             Show the daily ritrin point ranking.
+                                 date-str format: yyyy-mm-dd or "today". If omitted, show today's ranking.
 `;
 
 const showUsageAndExit = () => {
@@ -33,15 +35,6 @@ const showUsageAndExit = () => {
 };
 
 const dateStrOfToday = () => Temporal.Now.plainDateISO().toString();
-
-const parseProfileName = (k0Content: string) => {
-  try {
-    const profile = JSON.parse(k0Content);
-    return profile.display_name ?? profile.name ?? "???";
-  } catch {
-    return "???";
-  }
-};
 
 if (import.meta.main) {
   const kv = await Deno.openKv("../resource/rtp.db");
@@ -121,31 +114,16 @@ if (import.meta.main) {
       break;
     }
     case "ranking": {
-      const rtpTxRepo = new RitrinPointTxRepo(kv);
-      const txs = await rtpTxRepo.findAllWithinDay(dateStrOfToday());
-      const ptsPerPubkey = txs.reduce(
-        (acc, tx) => acc.set(tx.pubkey, (acc.get(tx.pubkey) ?? 0) + tx.amount),
-        new Map<string, number>(),
-      );
+      const [dstr] = Deno.args.slice(1);
+      const dateStr = dstr ?? "today";
 
-      const ranking = [...ptsPerPubkey.entries()].sort(
-        ([, a], [, b]) => b - a,
+      const ranking = await dailyRtpRanking(
+        kv,
+        dateStr === "today" ? dateStrOfToday() : dateStr,
       );
-
-      const profilesIter = NostrFetcher.init().fetchLastEventPerAuthor({
-        authors: [...ptsPerPubkey.keys()],
-        relayUrls: ["wss://directory.yabu.me", "wss://relay.nostr.band"],
-      }, { kinds: [0] });
-      const names = new Map<string, string>();
-      for await (const { author, event } of profilesIter) {
-        if (event !== undefined) {
-          names.set(author, parseProfileName(event.content));
-        } else {
-          names.set(author, "???");
-        }
-      }
-      for (const [pubkey, count] of ranking) {
-        console.log(`${names.get(pubkey) ?? pubkey}: ${count}`);
+      const formatted = formatRtpRanking(ranking);
+      for (const line of formatted) {
+        console.log(line);
       }
       break;
     }

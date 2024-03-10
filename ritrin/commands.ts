@@ -2,8 +2,8 @@ import * as log from "std/log/mod.ts";
 import { join } from "std/path/mod.ts";
 import { getNextKana } from "./common.ts";
 import { AppContext, EnvVars } from "./context.ts";
-import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
+import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
 
 type CommandContext = {
   env: EnvVars;
@@ -190,7 +190,7 @@ export const handleCommand = async (
   }
 };
 
-export const launchCmdChecker = ({ env }: AppContext) => {
+export const launchCommandChecker = ({ env }: AppContext) => {
   const serve = async () => {
     const sockPath = join(env.RESOURCE_DIR, "bot_cmd_check.sock");
     try {
