@@ -14,7 +14,7 @@ import {
   handleCommand,
   isLikelyCommand,
   launchCommandChecker,
-} from "./commands.ts";
+} from "./command.ts";
 import { currUnixtime, publishToRelays, systemTimeZone } from "./common.ts";
 import { AppContext, maskSecretsInEnvVars, parseEnvVars } from "./context.ts";
 import { launchShiritoriConnectionHook } from "./ritrin_point/handler.ts";
