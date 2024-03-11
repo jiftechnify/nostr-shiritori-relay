@@ -389,13 +389,26 @@ func saveLastKana(f *os.File, d *lastKanaData) error {
 }
 
 func judgeShiritoriConnection(hl *HeadLastKanaResp, ev *nostr.Event) (bool, error) {
-	f, err := os.OpenFile(filepath.Join(resourceDirPath, "last_kana.txt"), os.O_RDWR|os.O_CREATE, 0666)
+	fl, err := openFileWithLock(filepath.Join(resourceDirPath, "last_kana.txt"), os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return false, err
 	}
-	defer f.Close()
+	defer func() {
+		if err := fl.f.Close(); err != nil {
+			log.Printf("failed to close file: %v", err)
+		}
+	}()
 
-	prev, err := loadLastKana(f)
+	if err := fl.lock(); err != nil {
+		return false, err
+	}
+	defer func() {
+		if err := fl.unlock(); err != nil {
+			log.Printf("failed to unlock file: %v", err)
+		}
+	}()
+
+	prev, err := loadLastKana(fl.f)
 	if err != nil {
 		return false, err
 	}
@@ -411,7 +424,7 @@ func judgeShiritoriConnection(hl *HeadLastKanaResp, ev *nostr.Event) (bool, erro
 	}
 
 	// no prev (first event) or shiritori connected
-	if err := saveLastKana(f, &lastKanaData{hl.Last, ev.ID}); err != nil {
+	if err := saveLastKana(fl.f, &lastKanaData{hl.Last, ev.ID}); err != nil {
 		return false, err
 	}
 	return true, nil
