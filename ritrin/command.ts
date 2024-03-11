@@ -56,8 +56,7 @@ const commands: CommandDef[] = [
   {
     key: "next",
     // emoji triggers: ➡️, 🔜, ⏩
-    trigger:
-      /^(next|(次|つぎ)は?((何|なに)(から)?)?[?？]?)$|^[\u{23e9}\u{27a1}\u{1f51c}]/iu,
+    trigger: /next|次|つぎ|ツギ|[\u{23e9}\u{27a1}\u{1f51c}]/iu,
     handle: async (event, { env }) => {
       const next = await getNextKana(env);
       return [silentMention(event, `次は「${next}」から❗`)];
@@ -66,7 +65,7 @@ const commands: CommandDef[] = [
   {
     key: "point",
     // emoji trigger: 🅿️
-    trigger: /^(point|ポイント)$|^\u{1f17f}/iu,
+    trigger: /point|rtp|ポイント|ぽいんと|りとポ|\u{1f17f}/iu,
     handle: async (event, { rtpRepo }) => {
       const txs = await rtpRepo.findAllByPubkey(event.pubkey);
       const startOfToday =
@@ -95,7 +94,7 @@ const commands: CommandDef[] = [
   {
     key: "ping",
     // emoji triggers: 👋, 🤘
-    trigger: /^(ping|[生い]き([てと])る[?？])$|^[\u{1f44b}\u{1f918}]/iu,
+    trigger: /ping|[生い]き([てと])る.*[?？]|[\u{1f44b}\u{1f918}]/iu,
     handle: async (event, { env, matches }) => {
       try {
         const apiHealthResp = await fetch(`${env.YOMI_API_BASE_URL}/health`, {
@@ -116,7 +115,7 @@ const commands: CommandDef[] = [
   {
     key: "help",
     // emoji trigger: ❓
-    trigger: /^(help|ヘルプ)$|^\u{2753}/iu,
+    trigger: /help|ヘルプ|へるぷ|\u{2753}/iu,
     handle: () => {
       return [plainNote(helpText)];
     },
