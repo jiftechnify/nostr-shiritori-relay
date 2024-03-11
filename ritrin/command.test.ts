@@ -6,13 +6,14 @@ Deno.test("matchCommand", async (t) => {
     const tt = [
       { in: "r!next", exp: "next" },
       { in: "r!point", exp: "point" },
+      { in: "r!rtp", exp: "point" },
       { in: "r!ping", exp: "ping" },
       { in: "r!help", exp: "help" },
       { in: "r! next", exp: "next" },
       { in: "r!next ", exp: "next" },
       { in: "r! NEXT", exp: "next" },
       { in: "r!what's the next?", exp: "next" },
-      { in: "r!tell me my point", exp: "point" },
+      { in: "r!tell me my rtp", exp: "point" },
       { in: "りとりん、次", exp: "next" },
       { in: "りとりん、つぎ", exp: "next" },
       { in: "りとりん、ツギ", exp: "next" },
@@ -51,6 +52,7 @@ Deno.test("matchCommand", async (t) => {
     const invalidInputs = [
       "!next",
       "りとりんポイント",
+      "りとりん、生きてる",
     ];
 
     for (const input of invalidInputs) {
