@@ -1,5 +1,5 @@
 import { assert, assertEquals } from "std/assert/mod.ts";
-import { matchCommand } from "./commands.ts";
+import { matchCommand } from "./command.ts";
 
 Deno.test("matchCommand", async (t) => {
   await t.step("accept valid commands", () => {
