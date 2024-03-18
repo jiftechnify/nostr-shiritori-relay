@@ -8,6 +8,7 @@ import { NostrEvent, NostrEventUnsigned } from "./types.ts";
 export const currUnixtime = (): number => Math.floor(Date.now() / 1000);
 
 export const systemTimeZone = Temporal.Now.timeZone();
+export const jstTimeZone = Temporal.TimeZone.from("Asia/Tokyo");
 
 export const publishToRelays = async (
   relayUrls: string[],

@@ -1,6 +1,6 @@
 import * as log from "std/log/mod.ts";
 import { join } from "std/path/mod.ts";
-import { getNextKana } from "./common.ts";
+import { getNextKana, jstTimeZone } from "./common.ts";
 import { AppContext, EnvVars } from "./context.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
 import type { NostrEvent, NostrEventPre, NostrEventUnsigned } from "./types.ts";
@@ -69,7 +69,7 @@ const commands: CommandDef[] = [
     handle: async (event, { rtpRepo }) => {
       const txs = await rtpRepo.findAllByPubkey(event.pubkey);
       const startOfToday =
-        Temporal.Now.zonedDateTimeISO().startOfDay().epochSeconds;
+        Temporal.Now.zonedDateTimeISO(jstTimeZone).startOfDay().epochSeconds;
 
       const [total, today] = txs.reduce(
         (
