@@ -2,7 +2,7 @@ import { NostrFetcher } from "nostr-fetch";
 import { npubEncode } from "nostr-tools/nip19";
 import { delay } from "std/async/mod.ts";
 import * as log from "std/log/mod.ts";
-import { currUnixtime, publishToRelays } from "./common.ts";
+import { currUnixtime, jstTimeZone, publishToRelays } from "./common.ts";
 import { AppContext } from "./context.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
 import { NostrEventUnsigned } from "./types.ts";
@@ -102,8 +102,8 @@ export const launchPostDailyRtpRankingCron = (ctx: AppContext) => {
 
   // post daily RTP ranking at 00:00:05 (JST)
   Deno.cron("post daily RTP ranking", "0 15 * * *", async () => {
-    await delay(5 * 1000); // wait for 5 secs
-    const yesterday = Temporal.Now.plainDateISO("Asia/Tokyo").subtract({
+    await delay(10 * 1000); // wait for 10 secs
+    const yesterday = Temporal.Now.plainDateISO(jstTimeZone).subtract({
       days: 1,
     });
     try {
