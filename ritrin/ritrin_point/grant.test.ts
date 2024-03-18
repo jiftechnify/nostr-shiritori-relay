@@ -1,11 +1,12 @@
-import { assert, assertEquals, assertNotEquals } from "std/assert/mod.ts";
+import { assert, assertEquals, assertFalse } from "std/assert/mod.ts";
+import { jstTimeZone } from "../common.ts";
 import {
   grantDailyPoint,
   grantHibernationBreakingPoint,
   grantNicePassPoint,
   grantShiritoriPoint,
   grantSpecialConnectionPoint,
-  unixDayJst,
+  onTheSameDay,
 } from "./grant.ts";
 import {
   LastShiritoriConnectionRecord,
@@ -14,17 +15,16 @@ import {
 
 const dateToUnixtimeSec = (date: Date) => Math.floor(date.getTime() / 1000);
 
-Deno.test("unixDayJst", async (t) => {
-  await t.step("returns unix day in JST", () => {
+Deno.test("onTheSameDay", async (t) => {
+  await t.step("judges two timestamps are on the same day or not", () => {
     const d1 = dateToUnixtimeSec(new Date("2024-01-01T00:00:00+09:00"));
     const d2 = dateToUnixtimeSec(new Date("2024-01-01T08:00:00+09:00"));
     const d3 = dateToUnixtimeSec(new Date("2024-01-01T23:59:59+09:00"));
     const d4 = dateToUnixtimeSec(new Date("2023-12-31T23:59:59+09:00"));
 
-    const [u1, u2, u3, u4] = [d1, d2, d3, d4].map(unixDayJst);
-    assertEquals(u1, u2);
-    assertEquals(u1, u3);
-    assertNotEquals(u1, u4);
+    assert(onTheSameDay(d1, d2, jstTimeZone));
+    assert(onTheSameDay(d1, d3, jstTimeZone));
+    assertFalse(onTheSameDay(d1, d4, jstTimeZone));
   });
 });
 

@@ -1,3 +1,4 @@
+import { jstTimeZone } from "../common.ts";
 import {
   LastShiritoriConnectionRecord,
   RitrinPointTransaction,
@@ -75,8 +76,22 @@ export const grantShiritoriPoint = (
 };
 
 /* daily bonus point */
-export const unixDayJst = (unixtimeSec: number) =>
-  Math.floor((unixtimeSec + 9 * 3600) / (24 * 3600));
+const unixtimeToPlainDate = (
+  unixtimeSec: number,
+  tz: Temporal.TimeZoneLike,
+): Temporal.PlainDate =>
+  Temporal.Instant.fromEpochSeconds(unixtimeSec)
+    .toZonedDateTimeISO(tz)
+    .toPlainDate();
+
+export const onTheSameDay = (
+  unixSec1: number,
+  unixSec2: number,
+  tz: Temporal.TimeZoneLike,
+): boolean => {
+  const [d1, d2] = [unixSec1, unixSec2].map((t) => unixtimeToPlainDate(t, tz));
+  return d1.equals(d2);
+};
 
 const dailyPointAmount = 3;
 
@@ -86,7 +101,7 @@ export const grantDailyPoint = (
 ): RitrinPointTransaction[] => {
   if (
     lastAcceptedAt !== null &&
-    unixDayJst(newScp.acceptedAt) === unixDayJst(lastAcceptedAt)
+    onTheSameDay(newScp.acceptedAt, lastAcceptedAt, jstTimeZone)
   ) {
     return [];
   }
