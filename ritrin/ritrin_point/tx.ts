@@ -1,5 +1,6 @@
 import * as log from "std/log/mod.ts";
 import { ulid } from "ulid";
+import { jstTimeZone } from "../common.ts";
 import { RitrinPointTransaction } from "./model.ts";
 
 const prefixRtpTxPk = "ritrin_point_tx";
@@ -128,12 +129,11 @@ type TimeRange = { since: Temporal.Instant } | { until: Temporal.Instant } | {
   until: Temporal.Instant;
 };
 
-const timeZoneJst = Temporal.TimeZone.from("Asia/Tokyo");
 const timeRangeForDay = (
   dateStr: string,
 ): { since: Temporal.Instant; until: Temporal.Instant } => {
   const date = Temporal.PlainDate.from(dateStr);
-  const startZdt = date.toZonedDateTime(timeZoneJst);
+  const startZdt = date.toZonedDateTime({ timeZone: jstTimeZone });
   const endZdt = startZdt.add({ days: 1 });
   return {
     since: startZdt.toInstant(),
