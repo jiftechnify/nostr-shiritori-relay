@@ -6,7 +6,8 @@
     "picture": "https://pubimgs.c-stellar.net/ritrin1_s.webp",
     "banner": "https://pubimgs.c-stellar.net/ritrin2_banner_s.webp",
     "website": "https://srtrelay.c-stellar.net",
-    "nip05": "ritrin@c-stellar.net"
+    "nip05": "ritrin@c-stellar.net",
+    "bot": true
   },
   "follows": [
     "d1d1747115d16751a97c239f46ec1703292c3b7e9988b9ebdd4ec4705b15ed44"
