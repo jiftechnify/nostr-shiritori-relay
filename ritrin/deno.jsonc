@@ -11,7 +11,7 @@
     "ulid": "npm:ulidx@2.3.0"
   },
   "tasks": {
-    "start": "deno run -A --unstable-kv --unstable-temporal main.ts",
+    "start": "deno run -A --unstable-kv --unstable-temporal --unstable-cron main.ts",
     "set-data": "deno run -A --unstable-temporal set_account_data.ts",
     "rtp-inspect": "deno run -A --unstable-kv --unstable-temporal rtp_inspect.ts",
     "check": "deno check **/*.ts",
