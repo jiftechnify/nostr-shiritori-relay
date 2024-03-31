@@ -149,17 +149,18 @@ const main = async () => {
   });
 
   // notify launched
+  const launchingRitrin = env.REVERSE_MODE ? "╭(｡△｡*)╮¡" : "!(ง๑ •̀_•́)ง";
   await publishToRelays(
     writeRelayUrls,
     {
       kind: 1,
-      content: "!(ง๑ •̀_•́)ง",
+      content: launchingRitrin,
       tags: [],
       created_at: currUnixtime(),
     },
     env.RITRIN_PRIVATE_KEY,
   );
-  log.info("Ritrin launched !(ง๑ •̀_•́)ง");
+  log.info(`Ritrin launched ${!launchingRitrin}`);
 };
 
 const ritrinCallRegexp = /りっ*とり[ー〜]*ん/g;
