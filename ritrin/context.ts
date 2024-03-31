@@ -19,7 +19,10 @@ const envVarsSpec = {
   NOZOKIMADO_URL: url(),
 } as const;
 
-export const parseEnvVars = () => cleanEnv(Deno.env.toObject(), envVarsSpec);
+export const parseEnvVars = () => {
+  const cleaned = cleanEnv(Deno.env.toObject(), envVarsSpec);
+  return { ...cleaned, REVERSE_MODE: Deno.env.has("REVERSE_MODE") };
+};
 export type EnvVars = ReturnType<typeof parseEnvVars>;
 
 export const maskSecretsInEnvVars = (env: EnvVars): Record<string, unknown> => {

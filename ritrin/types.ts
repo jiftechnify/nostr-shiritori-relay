@@ -13,7 +13,7 @@ export type RelayUsage = {
   write: boolean;
 };
 export type AccountData = {
-  profile: Record<string, string>;
+  profile: Record<string, unknown>;
   follows: string[];
   relays: RelayUsage[];
 };

@@ -25,6 +25,7 @@ import (
 var (
 	resourceDirPath string
 	yomiAPIBaseURL  string
+	reverseMode     bool
 )
 
 var (
@@ -80,6 +81,7 @@ func initialize() error {
 	if yomiAPIBaseURL = os.Getenv("YOMI_API_BASE_URL"); yomiAPIBaseURL == "" {
 		return errors.New("YOMI_API_BASE_URL is not set in .env")
 	}
+	_, reverseMode = os.LookupEnv("REVERSE_MODE")
 
 	// add ritrin's pubkey to non-restricted pubkeys list
 	ritrinNsec := os.Getenv("RITRIN_PRIVATE_KEY")
@@ -184,13 +186,18 @@ func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 		return input.Reject("blocked: couldn't determine head/last of reading of content")
 	}
 
-	isShiritori, err := judgeShiritoriConnection(hl, input.Event)
+	// swap head and last under reverseMode
+	nextHL := hl
+	if reverseMode {
+		nextHL = &HeadLastKanaResp{Readable: true, Head: hl.Last, Last: hl.Head}
+	}
+	isShiritori, err := judgeShiritoriConnection(nextHL, input.Event)
 	if err != nil {
 		log.Printf("failed to judge shiritori connection: %v", err)
 		return nil, err
 	}
 	if !isShiritori {
-		log.Printf("❌Rejected! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
+		log.Printf("❌Rejected! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), nextHL.Head, nextHL.Last)
 		return input.Reject("blocked: shiritori not connected")
 	}
 
@@ -198,11 +205,11 @@ func shiritoriSifter(input *strfrui.Input) (*strfrui.Result, error) {
 	notifyShiritoriConnection(shiritoriConnectedPost{
 		Pubkey:     input.Event.PubKey,
 		EventID:    input.Event.ID,
-		Head:       string(hl.Head),
-		Last:       string(hl.Last),
+		Head:       string(nextHL.Head),
+		Last:       string(nextHL.Last),
 		AcceptedAt: clock.Now().Unix(),
 	})
-	log.Printf("✅Accepted! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), hl.Head, hl.Last)
+	log.Printf("✅Accepted! content: %s, head: %c, last: %c", strings.ReplaceAll(input.Event.Content, "\n", " "), nextHL.Head, nextHL.Last)
 	return input.Accept()
 }
 
