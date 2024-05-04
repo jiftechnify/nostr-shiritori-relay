@@ -4,7 +4,11 @@ import {
 } from "./ritrin_point/grant.ts";
 import { RitrinPointTransaction } from "./ritrin_point/model.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
-import { dailyRtpRanking, formatRtpRanking } from "./rtp_ranking.ts";
+import {
+  aggregateRtpRanking,
+  dailyRtpRanking,
+  formatRtpRanking,
+} from "./rtp_ranking.ts";
 
 type LastShiritoriConnectionRecord = {
   pubkey: string;
@@ -121,6 +125,16 @@ if (import.meta.main) {
         kv,
         dateStr === "today" ? dateStrOfToday() : dateStr,
       );
+      const formatted = formatRtpRanking(ranking);
+      for (const line of formatted) {
+        console.log(line);
+      }
+      break;
+    }
+    case "ranking-all": {
+      const txs = await new RitrinPointTxRepo(kv).findAll();
+
+      const ranking = await aggregateRtpRanking(txs, {});
       const formatted = formatRtpRanking(ranking);
       for (const line of formatted) {
         console.log(line);

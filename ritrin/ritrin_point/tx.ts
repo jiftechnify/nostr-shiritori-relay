@@ -46,6 +46,13 @@ export class RitrinPointTxRepo {
     return res.value ?? undefined;
   }
 
+  findAll(): Promise<RitrinPointTransaction[]> {
+    const iter = this.kv.list<RitrinPointTransaction>({
+      prefix: [prefixRtpTxPk],
+    });
+    return collectAsyncIter(iter, (v) => v.value);
+  }
+
   findAllByPubkey(pubkey: string): Promise<RitrinPointTransaction[]> {
     const iter = this.kv.list<RitrinPointTransaction>(
       { prefix: [prefixRtpTxSkByPubkey, pubkey] },
