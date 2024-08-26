@@ -137,7 +137,7 @@ const postDailyRtpRanking = async (
 export const launchPostDailyRtpRankingCron = (ctx: AppContext) => {
   log.info("launching a cron job that posts daily RTP ranking...");
 
-  // post daily RTP ranking at 00:00:05 (JST)
+  // post daily RTP ranking at 00:00:10 (JST)
   Deno.cron("post daily RTP ranking", "0 15 * * *", async () => {
     await delay(10 * 1000); // wait for 10 secs
     const yesterday = Temporal.Now.plainDateISO(jstTimeZone).subtract({

@@ -31,6 +31,7 @@ Commands:
                                  date-str format: yyyy-mm-dd or "today"
   ranking [date-str]             Show the daily ritrin point ranking.
                                  date-str format: yyyy-mm-dd or "today". If omitted, show today's ranking.
+  ranking-all                    Show the all-time ritrin point ranking.
 `;
 
 const showUsageAndExit = () => {
