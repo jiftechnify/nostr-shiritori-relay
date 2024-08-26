@@ -188,7 +188,7 @@ const main = async () => {
     },
     env.RITRIN_PRIVATE_KEY,
   );
-  log.info(`Ritrin launched ${!launchingRitrin}`);
+  log.info(`Ritrin launched ${launchingRitrin}`);
 };
 
 /* conditions for special responses */
