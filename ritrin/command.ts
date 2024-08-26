@@ -68,8 +68,10 @@ const commands: CommandDef[] = [
     trigger: /point|rtp|ポイント|ぽいんと|りとポ|\u{1f17f}/iu,
     handle: async (event, { rtpRepo }) => {
       const txs = await rtpRepo.findAllByPubkey(event.pubkey);
-      const startOfToday =
-        Temporal.Now.zonedDateTimeISO(jstTimeZone).startOfDay().epochSeconds;
+      const startOfToday = Math.floor(
+        Temporal.Now.zonedDateTimeISO(jstTimeZone).startOfDay()
+          .epochMilliseconds / 1000,
+      );
 
       const [total, today] = txs.reduce(
         (

@@ -260,6 +260,8 @@
     "https://deno.land/std@0.218.0/path/windows/resolve.ts": "8dae1dadfed9d46ff46cc337c9525c0c7d959fb400a6308f34595c45bdca1972",
     "https://deno.land/std@0.218.0/path/windows/to_file_url.ts": "40e560ee4854fe5a3d4d12976cef2f4e8914125c81b11f1108e127934ced502e",
     "https://deno.land/std@0.218.0/path/windows/to_namespaced_path.ts": "4ffa4fb6fae321448d5fe810b3ca741d84df4d7897e61ee29be961a6aac89a4c",
+    "https://deno.land/std@0.218.0/testing/_test_suite.ts": "f10a8a6338b60c403f07a76f3f46bdc9f1e1a820c0a1decddeb2949f7a8a0546",
+    "https://deno.land/std@0.218.0/testing/bdd.ts": "7a8ac58eded80e6fefa7cf7538927e88781cf5f247c04b35261c3213316e2dd0",
     "https://deno.land/x/envalid@0.1.2/core.ts": "9cb1b469919af72d3ad8576f952c8b695e9b5356878d84f15db9328b7afab2d5",
     "https://deno.land/x/envalid@0.1.2/envalid.ts": "76755815e2643aacbe604e3cd76415f0f4c8cc04d7cdbae0ab05a0ebc86ceb38",
     "https://deno.land/x/envalid@0.1.2/errors.ts": "8524f99ff929abe5c9fa07c250cafb15e564d5339ae8fdfabd6d56fab9ec7e00",

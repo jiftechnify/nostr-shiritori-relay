@@ -80,7 +80,7 @@ const unixtimeToPlainDate = (
   unixtimeSec: number,
   tz: Temporal.TimeZoneLike,
 ): Temporal.PlainDate =>
-  Temporal.Instant.fromEpochSeconds(unixtimeSec)
+  Temporal.Instant.fromEpochMilliseconds(unixtimeSec * 1000)
     .toZonedDateTimeISO(tz)
     .toPlainDate();
 
