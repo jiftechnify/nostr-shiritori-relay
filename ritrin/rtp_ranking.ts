@@ -108,9 +108,10 @@ export const formatRtpRanking = (ranking: RtpRankingEntry[]): string[] => {
     const rank = (points === prevPts) ? consecRank : i + 1;
     consecRank = rank;
     prevPts = points;
+    const fmtRank = rankEmojis[rank] ?? String(rank)
     return (name !== undefined)
-      ? `${rankEmojis[rank]} ${points} ${name} (nostr:${npub})`
-      : `${rankEmojis[rank]} ${points} nostr:${npub}`;
+      ? `${fmtRank} ${points} ${name} (nostr:${npub})`
+      : `${fmtRank} ${points} nostr:${npub}`;
   });
 };
 
