@@ -17,6 +17,7 @@ import {
 } from "./command.ts";
 import { currUnixtime, publishToRelays, systemTimeZone } from "./common.ts";
 import { AppContext, maskSecretsInEnvVars, parseEnvVars } from "./context.ts";
+import { findLastShiritoriAcceptedAtOfPubkey } from "./ritrin_point/grant.ts";
 import { launchShiritoriConnectionHook } from "./ritrin_point/handler.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
 import { launchPostDailyRtpRankingCron } from "./rtp_ranking.ts";
@@ -104,6 +105,33 @@ const main = async () => {
         rxn.send(resp, { seckey: env.RITRIN_PRIVATE_KEY });
         return;
       }
+      if (isAskForAgreement(event.content)) {
+        // respond to an ask for Rinrin's agreement (e.g. "りとりんもそう思うよな").
+        // users must ask an agreement in 1 min from last shiritori accepted to get a response.
+        const now = currUnixtime();
+        const lastAcceptedAt = await findLastShiritoriAcceptedAtOfPubkey(
+          appCtx.ritrinPointKv,
+          event.pubkey,
+        );
+        if (lastAcceptedAt === undefined || lastAcceptedAt < now - 60) {
+          return;
+        }
+
+        log.info(
+          `someone asked for Ritrin's agreement: ${event.content} (id: ${event.id})`,
+        );
+        const resp: NostrEventUnsigned = {
+          kind: 7,
+          content: Math.random() < 0.6 ? "🙂‍↕" : "🙂‍↔",
+          tags: [
+            ["p", event.pubkey, ""],
+            ["e", event.id, ""],
+          ],
+          created_at: now,
+        };
+        rxn.send(resp, { seckey: env.RITRIN_PRIVATE_KEY });
+        return;
+      }
     });
   req.emit({ kinds: [1], limit: 0 });
 
@@ -163,10 +191,15 @@ const main = async () => {
   log.info(`Ritrin launched ${!launchingRitrin}`);
 };
 
+/* conditions for special responses */
 const ritrinCallRegexp = /りっ*とり[ー〜]*ん/g;
 const isRitrinCall = (content: string): boolean => {
   const matches = content.matchAll(ritrinCallRegexp);
   return [...matches].some((m) => m[0] !== "りとりん");
+};
+
+const isAskForAgreement = (content: string): boolean => {
+  return content.includes("りとりんも") && content.includes("そう思う");
 };
 
 if (import.meta.main) {

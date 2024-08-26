@@ -1,6 +1,6 @@
 import {
-  lastShiritoriAcceptedAtPerAuthorKey,
-  lastShiritoriConnectionKey,
+  findLastShiritoriAcceptedAtOfPubkey,
+  findLastShiritoriConnectionRecord,
 } from "./ritrin_point/grant.ts";
 import { RitrinPointTransaction } from "./ritrin_point/model.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";
@@ -50,21 +50,16 @@ if (import.meta.main) {
         console.error("missing pubkey");
         showUsageAndExit();
       }
-      const res = await kv.get<number>(
-        lastShiritoriAcceptedAtPerAuthorKey(Deno.args[1]),
-      );
-      res.value
+      const res = await findLastShiritoriAcceptedAtOfPubkey(kv, Deno.args[1]);
+      res
         ? console.log(
-          `${res.value} (${new Date(res.value * 1000).toLocaleString()})`,
+          `${res} (${new Date(res * 1000).toLocaleString()})`,
         )
         : console.log("not found");
       break;
     }
     case "last-srtr-conn": {
-      const res = await kv.get<LastShiritoriConnectionRecord>(
-        lastShiritoriConnectionKey,
-      );
-      console.log(res.value);
+      console.log(await findLastShiritoriConnectionRecord(kv));
       break;
     }
     case "point": {

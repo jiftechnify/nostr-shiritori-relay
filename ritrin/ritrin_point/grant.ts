@@ -5,11 +5,11 @@ import {
   ShiritoriConnectedPost,
 } from "./model.ts";
 
-export const lastShiritoriAcceptedAtPerAuthorKey = (
+const lastShiritoriAcceptedAtPerAuthorKey = (
   author: string,
 ): Deno.KvKey => ["last_accepted_at", author];
 
-export const lastShiritoriConnectionKey: Deno.KvKey = [
+const lastShiritoriConnectionKey: Deno.KvKey = [
   "last_shiritori_connection",
 ];
 
@@ -26,16 +26,16 @@ export const grantRitrinPoints = async (
 
   let res = { ok: false };
   while (!res.ok) {
-    const [myLastConnectedAt, prevConnRecord] = await kv.getMany<
+    const [myLastConnectedAt, lastConnRecord] = await kv.getMany<
       [number, LastShiritoriConnectionRecord]
     >([myLastAcceptedAtKey, lastShiritoriConnectionKey]);
 
     const grantedPoints = [
-      ...grantShiritoriPoint(prevConnRecord.value, newScp),
+      ...grantShiritoriPoint(lastConnRecord.value, newScp),
       ...grantDailyPoint(myLastConnectedAt.value, newScp),
-      ...grantHibernationBreakingPoint(prevConnRecord.value, newScp),
-      ...grantNicePassPoint(prevConnRecord.value, newScp),
-      ...grantSpecialConnectionPoint(prevConnRecord.value, newScp),
+      ...grantHibernationBreakingPoint(lastConnRecord.value, newScp),
+      ...grantNicePassPoint(lastConnRecord.value, newScp),
+      ...grantSpecialConnectionPoint(lastConnRecord.value, newScp),
     ];
     const hibernationBreaking = grantedPoints.some((b) =>
       b.type === "hibernation-breaking"
@@ -45,7 +45,7 @@ export const grantRitrinPoints = async (
       ...newScp,
       hibernationBreaking,
     };
-    res = await kv.atomic().check(myLastConnectedAt).check(prevConnRecord)
+    res = await kv.atomic().check(myLastConnectedAt).check(lastConnRecord)
       .set(myLastAcceptedAtKey, newScp.acceptedAt)
       .set(
         lastShiritoriConnectionKey,
@@ -244,4 +244,22 @@ export const grantSpecialConnectionPoint = (
     amount: specialConnectionPointAmount,
     grantedAt: newScp.acceptedAt,
   }];
+};
+
+/* utilities for inspection */
+export const findLastShiritoriAcceptedAtOfPubkey = async (
+  kv: Deno.Kv,
+  pubkey: string,
+): Promise<number | undefined> => {
+  const res = await kv.get<number>(lastShiritoriAcceptedAtPerAuthorKey(pubkey));
+  return res.value ?? undefined;
+};
+
+export const findLastShiritoriConnectionRecord = async (
+  kv: Deno.Kv,
+): Promise<LastShiritoriConnectionRecord | undefined> => {
+  const res = await kv.get<LastShiritoriConnectionRecord>(
+    lastShiritoriConnectionKey,
+  );
+  return res.value ?? undefined;
 };
