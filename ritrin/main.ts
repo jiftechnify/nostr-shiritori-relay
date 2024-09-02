@@ -113,7 +113,10 @@ const main = async () => {
           appCtx.ritrinPointKv,
           event.pubkey,
         );
-        if (lastAcceptedAt === undefined || lastAcceptedAt < now - 60) {
+        if (
+          lastAcceptedAt === undefined ||
+          lastAcceptedAt < now - ASK_FOR_AGREEMENT_GRACE_PERIOD_SEC
+        ) {
           return;
         }
 
@@ -191,13 +194,14 @@ const main = async () => {
   log.info(`Ritrin launched ${launchingRitrin}`);
 };
 
-/* conditions for special responses */
+/* special responses */
 const ritrinCallRegexp = /りっ*とり[ー〜]*ん/g;
 const isRitrinCall = (content: string): boolean => {
   const matches = content.matchAll(ritrinCallRegexp);
   return [...matches].some((m) => m[0] !== "りとりん");
 };
 
+const ASK_FOR_AGREEMENT_GRACE_PERIOD_SEC = 120;
 const isAskForAgreement = (content: string): boolean => {
   return content.includes("りとりんも") && content.includes("そう思う");
 };
