@@ -203,7 +203,8 @@ const isRitrinCall = (content: string): boolean => {
 
 const ASK_FOR_AGREEMENT_GRACE_PERIOD_SEC = 120;
 const isAskForAgreement = (content: string): boolean => {
-  return content.includes("りとりんも") && content.includes("そう思う");
+  return content.includes("りとりんも") &&
+    (["そう思う", "よな", "よね"].some((kw) => content.includes(kw)));
 };
 
 if (import.meta.main) {
