@@ -3,10 +3,8 @@
     "std/": "https://deno.land/std@0.218.0/",
     "rx-nostr": "npm:rx-nostr@2.6.2",
     "rxjs": "npm:rxjs@7.8.1",
-    "nostr-tools/event": "npm:nostr-tools@1.17.0/event",
-    "nostr-tools/nip19": "npm:nostr-tools@1.17.0/nip19",
-    "nostr-tools/relay": "npm:nostr-tools@1.17.0/relay",
-    "nostr-fetch": "npm:nostr-fetch@0.15.0",
+    "nostr-tools/": "npm:/nostr-tools@1.17.0/",
+    "nostr-fetch": "npm:/nostr-fetch@0.15.0",
     "envalid": "https://deno.land/x/envalid@0.1.2/mod.ts",
     "ulid": "npm:ulidx@2.3.0"
   },
