@@ -106,7 +106,7 @@ const commands: CommandDef[] = [
           throw new Error("yomi api is not healthy");
         }
 
-        const t = matches[2] ?? "て";
+        const t = matches[1] ?? "て";
         return [silentMention(event, `生き${t}るよ❗`)];
       } catch (e) {
         log.error(`r!ping: something wrong with the system: ${e}`);
