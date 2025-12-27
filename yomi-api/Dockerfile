@@ -1,4 +1,4 @@
-FROM public.ecr.aws/docker/library/golang:1.22.1-alpine AS build
+FROM public.ecr.aws/docker/library/golang:1.25.5-alpine AS build
 WORKDIR /go/src
 COPY . /go/src
 RUN apk --update --no-cache add ca-certificates
