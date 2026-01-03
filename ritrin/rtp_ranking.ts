@@ -1,7 +1,7 @@
 import { NostrFetcher } from "nostr-fetch";
 import { npubEncode } from "nostr-tools/nip19";
-import { delay } from "std/async/mod.ts";
-import * as log from "std/log/mod.ts";
+import { delay } from "@std/async";
+import * as log from "@std/log";
 import { currUnixtime, jstTimeZone, publishToRelays } from "./common.ts";
 import { AppContext } from "./context.ts";
 import { RitrinPointTransaction } from "./ritrin_point/model.ts";
@@ -108,14 +108,26 @@ export const formatRtpRanking = (ranking: RtpRankingEntry[]): string[] => {
     const rank = (points === prevPts) ? consecRank : i + 1;
     consecRank = rank;
     prevPts = points;
-    const fmtRank = rankEmojis[rank] ?? String(rank)
+    const fmtRank = rankEmojis[rank] ?? String(rank);
     return (name !== undefined)
       ? `${fmtRank} ${points} ${name} (nostr:${npub})`
       : `${fmtRank} ${points} nostr:${npub}`;
   });
 };
 
-const rankEmojis = ["", "🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+const rankEmojis = [
+  "",
+  "🥇",
+  "🥈",
+  "🥉",
+  "4️⃣",
+  "5️⃣",
+  "6️⃣",
+  "7️⃣",
+  "8️⃣",
+  "9️⃣",
+  "🔟",
+];
 
 const postDailyRtpRanking = async (
   { ritrinPointKv, writeRelayUrls, env }: AppContext,

@@ -35,9 +35,9 @@ jobs:
         working-directory: ./ritrin  
     steps:
       - uses: actions/checkout@v4
-      - uses: denoland/setup-deno@v1.1.4
+      - uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: "~1.41"
+          deno-version: "~2.6"
       - run: deno fmt --check
       - run: deno lint
       #- run: deno task check # deno check **/*.ts

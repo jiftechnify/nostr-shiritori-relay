@@ -1,5 +1,5 @@
-import * as log from "std/log/mod.ts";
-import { join } from "std/path/mod.ts";
+import * as log from "@std/log";
+import { join } from "@std/path";
 import { getNextKana, jstTimeZone } from "./common.ts";
 import { AppContext, EnvVars } from "./context.ts";
 import { RitrinPointTxRepo } from "./ritrin_point/tx.ts";

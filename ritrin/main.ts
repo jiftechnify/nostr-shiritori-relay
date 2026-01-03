@@ -7,8 +7,8 @@ import {
   verify,
 } from "rx-nostr";
 import { filter } from "rxjs";
-import * as log from "std/log/mod.ts";
-import * as path from "std/path/mod.ts";
+import * as log from "@std/log";
+import * as path from "@std/path";
 import rawAccountData from "./account_data.json" with { type: "json" };
 import {
   handleCommand,

@@ -1,4 +1,4 @@
-import * as dotenv from "std/dotenv/mod.ts";
+import * as dotenv from "@std/dotenv";
 import rawAccountData from "./account_data.json" with { type: "json" };
 import { currUnixtime, publishToRelays } from "./common.ts";
 import { parseEnvVars } from "./context.ts";
