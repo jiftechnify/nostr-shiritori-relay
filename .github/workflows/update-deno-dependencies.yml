@@ -8,7 +8,10 @@ on:
 
 jobs:
   update:
-    permissions: write-all
+    permissions:
+      contents: write
+      pull-requests: write
+
     runs-on: ubuntu-latest
 
     steps:
@@ -25,36 +28,47 @@ jobs:
           token: ${{ steps.create_token.outputs.token }}
 
       - name: Setup Deno
-        uses: denoland/setup-deno@v1.1.4
+        uses: denoland/setup-deno@v2.0.3
         with:
-          deno-version: "~1.41"
+          deno-version: "~2.6"
 
-      - name: Update dependencies with udd
-        id: run-deno-udd
-        env:
-          NO_COLOR: true
+      - name: Update dependencies with `deno outdated`
+        id: deno-outdated
+        working-directory: "./ritrin"
         run: |
-          {
-            echo 'UDD_RESULT<<EOF'
-            deno run --allow-all https://deno.land/x/udd@0.8.2/main.ts $(find ./ritrin -type f | grep -E ".*\.([mc]?(ts|js)|(ts|js)x?)$" -)
-            echo EOF
-          } >> $GITHUB_OUTPUT
+          RESULT=$(deno outdated --update 2>&1 | grep -v -e '^Download') || true
+          echo "result<<EOF" >> $GITHUB_OUTPUT
+          echo "$RESULT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
-      - name: Create pull request
-        uses: peter-evans/create-pull-request@v6
+          if git diff --quiet; then
+            UPDATED="false"
+          else
+            UPDATED="true"
+          fi
+          echo "updated=$UPDATED" >> $GITHUB_OUTPUT
+
+          echo "result:"
+          echo "$RESULT"
+          echo
+          echo "updated: $UPDATED"
+        env:
+          NO_COLOR: "1"
+
+      - name: Create Pull Request
+        if: steps.deno-outdated.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v8
         with:
-          commit-message: "chore(deps): Update deno dependencies"
-          title: Update Deno dependencies
-          body: |-
-            Some external modules are stale.
-            <details><summary>Details</summary><div>
-
-            ```
-            ${{ steps.run-deno-udd.outputs.UDD_RESULT }}
-            ```
-
-            </div></details>
-          branch: udd-update
-          author: GitHub <noreply@github.com>
+          token: ${{ steps.create-token.outputs.token }}
+          commit-message: "chore(deps): update deno dependencies"
+          branch: chore/update-deno-deps
           delete-branch: true
-          token: ${{ steps.create_token.outputs.token }}
+          title: "chore(deps): Update Deno Dependencies"
+          body: |
+            Updated dependencies with `deno outdated --update`:
+
+            ```
+            ${{ steps.deno-outdated.outputs.result }}
+            ```
+          labels: |
+            dependencies
