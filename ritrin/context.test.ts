@@ -1,5 +1,5 @@
-import { assertEquals } from "std/assert/mod.ts";
-import { beforeEach, describe, it } from "std/testing/bdd.ts";
+import { assertEquals } from "@std/assert";
+import { beforeEach, describe, it } from "@std/testing/bdd";
 import { parseEnvVars } from "./context.ts";
 
 const TEST_PRIVATE_KEY = {

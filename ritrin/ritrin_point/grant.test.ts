@@ -1,4 +1,4 @@
-import { assert, assertEquals, assertFalse } from "std/assert/mod.ts";
+import { assert, assertEquals, assertFalse } from "@std/assert";
 import { jstTimeZone } from "../common.ts";
 import {
   grantDailyPoint,

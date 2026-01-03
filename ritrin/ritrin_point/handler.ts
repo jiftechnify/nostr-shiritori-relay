@@ -1,5 +1,5 @@
-import * as log from "std/log/mod.ts";
-import * as path from "std/path/mod.ts";
+import * as log from "@std/log";
+import * as path from "@std/path";
 import { currUnixtime, publishToRelays } from "../common.ts";
 import { AppContext } from "../context.ts";
 import { grantRitrinPoints } from "./grant.ts";

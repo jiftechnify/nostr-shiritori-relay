@@ -1,7 +1,7 @@
 import { NostrFetcher } from "nostr-fetch";
 import { npubEncode } from "nostr-tools/nip19";
-import { delay } from "std/async/mod.ts";
-import * as log from "std/log/mod.ts";
+import { delay } from "@std/async";
+import * as log from "@std/log";
 import { currUnixtime, jstTimeZone, publishToRelays } from "./common.ts";
 import { AppContext } from "./context.ts";
 import { RitrinPointTransaction } from "./ritrin_point/model.ts";

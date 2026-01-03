@@ -1,4 +1,4 @@
-import { assert, assertEquals } from "std/assert/mod.ts";
+import { assert, assertEquals } from "@std/assert";
 import { matchCommand } from "./command.ts";
 
 Deno.test("matchCommand", async (t) => {

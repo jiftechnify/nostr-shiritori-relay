@@ -1,6 +1,6 @@
-import { debounce } from "std/async/mod.ts";
-import * as log from "std/log/mod.ts";
-import { basename } from "std/path/mod.ts";
+import { debounce } from "@std/async";
+import * as log from "@std/log";
+import { basename } from "@std/path";
 import {
   currUnixtime,
   getNextKana,

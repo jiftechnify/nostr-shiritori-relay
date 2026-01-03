@@ -1,4 +1,4 @@
-import * as log from "std/log/mod.ts";
+import * as log from "@std/log";
 import { ulid } from "ulid";
 import { jstTimeZone } from "../common.ts";
 import { RitrinPointTransaction } from "./model.ts";
