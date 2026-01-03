@@ -60,7 +60,7 @@ Deno.test("matchCommand", async (t) => {
       assert(res === undefined, `should not match: ${input}`);
     }
   });
-  await t.step("submatch for 「りとりん、生き(て/と)る?」 is valid" , () => {
+  await t.step("submatch for 「りとりん、生き(て/と)る?」 is valid", () => {
     const res = matchCommand("りとりん、生きてる？");
     assert(res !== undefined, "should match");
     assert(res.matches[1] === "て", "invalid submatch: should be て");
@@ -68,5 +68,5 @@ Deno.test("matchCommand", async (t) => {
     const res2 = matchCommand("りとりん、生きとる？");
     assert(res2 !== undefined, "should match");
     assert(res2.matches[1] === "と", "invalid submatch: should be と");
-  })
+  });
 });
