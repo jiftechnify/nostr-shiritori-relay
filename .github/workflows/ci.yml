@@ -11,7 +11,7 @@ jobs:
         working-directory: ./sifter
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
       - run: go vet ./...
       - run: go test ./...
   
@@ -23,7 +23,7 @@ jobs:
         working-directory: ./yomi-api
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
       - run: go vet ./...
       - run: go test ./...
 
