@@ -23,7 +23,7 @@ jobs:
           private_key: ${{ secrets.PRIVATE_KEY }}
 
       - name: Setup repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ steps.create_token.outputs.token }}
 
