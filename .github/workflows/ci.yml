@@ -35,7 +35,7 @@ jobs:
         working-directory: ./ritrin  
     steps:
       - uses: actions/checkout@v6
-      - uses: denoland/setup-deno@v2.0.3
+      - uses: denoland/setup-deno@v2.0.4
         with:
           deno-version: "~2.6"
       - run: deno fmt --check
